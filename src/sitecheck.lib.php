@@ -1,5 +1,19 @@
 <?php
 
+/**
+ * Code related to the sitecheck.lib.php interface.
+ *
+ * PHP version 5
+ *
+ * @category   Library
+ * @package    GoDaddy
+ * @subpackage GoDaddySecurity
+ * @author     Daniel Cid <dcid@sucuri.net>
+ * @copyright  2017 Sucuri Inc. - GoDaddy LLC.
+ * @license    https://www.godaddy.com/ - Proprietary
+ * @link       https://wordpress.org/plugins/godaddy-security
+ */
+
 if (!defined('GDDYSEC_INIT') || GDDYSEC_INIT !== true) {
     if (!headers_sent()) {
         /* Report invalid access if possible. */
@@ -8,144 +22,210 @@ if (!defined('GDDYSEC_INIT') || GDDYSEC_INIT !== true) {
     exit(1);
 }
 
-class GddysecSiteCheck
+/**
+ * Controls the execution of the SiteCheck scanner.
+ *
+ * SiteCheck is a web application scanner that reads the source code of a
+ * website to determine if it is serving malicious code, it scans the home page
+ * and linked sub-pages, then compares the results with a list of signatures as
+ * well as a list of blacklist services to see if other malware scanners have
+ * flagged the website before. This operation may take a couple of seconds,
+ * around twenty seconds in most cases; be sure to set enough timeout for the
+ * operation to finish, otherwise the scanner will return innacurate
+ * information.
+ *
+ * @category   Library
+ * @package    GoDaddy
+ * @subpackage GoDaddySecurity
+ * @author     Daniel Cid <dcid@sucuri.net>
+ * @copyright  2017 Sucuri Inc. - GoDaddy LLC.
+ * @license    https://www.godaddy.com/ - Proprietary
+ * @link       https://wordpress.org/plugins/godaddy-security
+ * @see        https://sitecheck.sucuri.net/
+ */
+class GddysecSiteCheck extends GddysecAPI
 {
+    /**
+     * Returns the URL that will be scanned by SiteCheck.
+     *
+     * @return string URL to be scanned.
+     */
+    private static function targetURL()
+    {
+        /* allow to set a custom URL for the scans */
+        $custom = GddysecOption::getOption(':sitecheck_target');
+
+        if ($custom) {
+            return $custom;
+        }
+
+        return Gddysec::getDomain();
+    }
+
+    /**
+     * Executes a malware scan against the specified website.
+     *
+     * @see https://sitecheck.sucuri.net/
+     *
+     * @param  bool $clear Request the results from a fresh scan or not.
+     * @return array|bool  JSON encoded website scan results.
+     */
+    public static function runMalwareScan($clear = false)
+    {
+        $params = array();
+        $params['json'] = 1;
+        $params['fromwp'] = 2;
+        $params['scan'] = self::targetURL();
+
+        /* force clear scan */
+        if ($clear === true) {
+            $params['clear'] = 1;
+        }
+
+        $args = array('assoc' => true, 'timeout' => 60);
+
+        return self::apiCall('https://sitecheck.sucuri.net/', 'GET', $params, $args);
+    }
+
+    /**
+     * Scans a website for malware using SiteCheck.
+     *
+     * This method will first check if the scan results have been cached by a
+     * previous scan. The lifetime of the cache is defined in the global script
+     * but usually it should not be higher than fifteen minutes. If the cache
+     * exists it will be used to display the information in the dashboard.
+     *
+     * If the cache does not exists or has already expired, it will send a HTTP
+     * request to the SiteCheck API service to execute a fresh scan, this takes
+     * around twenty seconds, it will decode and process the response and render
+     * the results in the dashboard.
+     *
+     * If the user sends a GET parameter named "s" with a valid domain name, it
+     * will be used instead of the one of the current website. This is useful if
+     * you want to test the functionality of the scanner in a different website
+     * without access to its domain, which is basically the same thing that you
+     * can do in the official SiteCheck website. This parameter also bypasses
+     * the cache.
+     *
+     * @return array|bool SiteCheck scan results.
+     */
     public static function scanAndCollectData()
     {
-        $tld = Gddysec::get_domain();
         $cache = new GddysecCache('sitecheck');
         $results = $cache->get('scan_results', GDDYSEC_SITECHECK_LIFETIME, 'array');
 
-        /**
-         * Allow the user to scan foreign domains.
-         *
-         * This condition allows for the execution of the malware scanner on a
-         * website different than the one where the plugin is installed. This is
-         * basically the same as scanning any domain on the SiteCheck website.
-         * In this case, this is mostly used to allow the development execute
-         * tests and to troubleshoot issues reported by other users.
-         *
-         * @var boolean
-         */
-        if ($custom = GddysecRequest::get('s')) {
-            $tld = Gddysec::escape($custom);
-            $results = false /* invalid cache */;
-        }
-
-        // Return cached malware scan results.
+        /* return cached malware scan results. */
         if ($results && !empty($results)) {
             return $results;
         }
 
-        // Send HTTP request to SiteCheck's API service.
-        $results = GddysecAPI::getSitecheckResults($tld);
+        /* delete expired cache */
+        $cache->delete('scan_results');
 
-        // Check for error in the request's response.
-        if (is_string($results)) {
-            if (@preg_match('/^ERROR:(.+)/', $results, $error_m)) {
-                GddysecInterface::error(
-                    'The site <code>' . Gddysec::escape($tld) . '</code>'
-                    . ' was not scanned: ' . Gddysec::escape($error_m[1])
-                );
-            } else {
-                GddysecInterface::error('SiteCheck error: ' . $results);
+        /* send HTTP request to SiteCheck's API service. */
+        $results = self::runMalwareScan();
+
+        /* check for error in the request's response. */
+        if (is_string($results) || isset($results['SYSTEM']['ERROR'])) {
+            if (isset($results['SYSTEM']['ERROR'])) {
+                $results = implode("\x20", $results['SYSTEM']['ERROR']);
             }
 
-            return false;
+            return GddysecInterface::error('SiteCheck error: ' . $results);
         }
 
-        // Increase the malware scan counter.
-        $counter = (int) GddysecOption::get_option(':sitecheck_counter');
-        GddysecOption::update_option(':sitecheck_counter', $counter+1);
-
-        // Cache the results for some time.
-        $cache = new GddysecCache('sitecheck');
-        $results_were_cached = $cache->add('scan_results', $results);
-
-        if (!$results_were_cached) {
-            GddysecInterface::error('Could not cache the malware scan results.');
-        }
+        /* cache the results for some time. */
+        $cache->add('scan_results', $results);
 
         return $results;
     }
 
+    /**
+     * Generates the HTML section for the SiteCheck details.
+     *
+     * @return string HTML code to render the details section.
+     */
     public static function details()
     {
         $params = array();
         $data = self::scanAndCollectData();
+        $data['details'] = array();
 
-        $params['SiteCheck.Website'] = '(unknown)';
-        $params['SiteCheck.Domain'] = '(unknown)';
-        $params['SiteCheck.ServerAddress'] = '(unknown)';
-        $params['SiteCheck.WPVersion'] = Gddysec::site_version();
-        $params['SiteCheck.PHPVersion'] = phpversion();
-        $params['SiteCheck.Additional'] = '';
+        $params['SiteCheck.Metadata'] = '';
+        $data['details'][] = 'PHP Version: ' . phpversion();
+        $data['details'][] = 'Version: ' . Gddysec::siteVersion();
 
         if (isset($data['SCAN']['SITE'])) {
             $params['SiteCheck.Website'] = $data['SCAN']['SITE'][0];
-        }
-
-        if (isset($data['SCAN']['DOMAIN'])) {
-            $params['SiteCheck.Domain'] = $data['SCAN']['DOMAIN'][0];
         }
 
         if (isset($data['SCAN']['IP'])) {
             $params['SiteCheck.ServerAddress'] = $data['SCAN']['IP'][0];
         }
 
-        $data['SCAN_ADDITIONAL'] = array();
-
         if (isset($data['SCAN']['HOSTING'])) {
-            $data['SCAN_ADDITIONAL'][] = 'Hosting: ' . $data['SCAN']['HOSTING'][0];
+            $data['details'][] = 'Hosting: ' . $data['SCAN']['HOSTING'][0];
         }
 
         if (isset($data['SCAN']['CMS'])) {
-            $data['SCAN_ADDITIONAL'][] = 'CMS: ' . $data['SCAN']['CMS'][0];
+            $data['details'][] = 'CMS: ' . $data['SCAN']['CMS'][0];
         }
 
         if (isset($data['SYSTEM']['NOTICE'])) {
-            $data['SCAN_ADDITIONAL'] = array_merge(
-                $data['SCAN_ADDITIONAL'],
+            $data['details'] = array_merge(
+                $data['details'],
                 $data['SYSTEM']['NOTICE']
             );
         }
 
         if (isset($data['SYSTEM']['INFO'])) {
-            $data['SCAN_ADDITIONAL'] = array_merge(
-                $data['SCAN_ADDITIONAL'],
+            $data['details'] = array_merge(
+                $data['details'],
                 $data['SYSTEM']['INFO']
             );
         }
 
         if (isset($data['WEBAPP']['VERSION'])) {
-            $data['SCAN_ADDITIONAL'] = array_merge(
-                $data['SCAN_ADDITIONAL'],
+            $data['details'] = array_merge(
+                $data['details'],
                 $data['WEBAPP']['VERSION']
             );
         }
 
         if (isset($data['WEBAPP']['WARN'])) {
-            $data['SCAN_ADDITIONAL'] = array_merge(
-                $data['SCAN_ADDITIONAL'],
+            $data['details'] = array_merge(
+                $data['details'],
                 $data['WEBAPP']['WARN']
             );
         }
 
         if (isset($data['OUTDATEDSCAN'])) {
             foreach ($data['OUTDATEDSCAN'] as $outdated) {
-                $data['SCAN_ADDITIONAL'][] = $outdated[0] . ':' . $outdated[2];
+                if (isset($outdated[0]) && isset($outdated[2])) {
+                    $data['details'][] = $outdated[0] . ':' . $outdated[2];
+                }
             }
         }
 
-        foreach ($data['SCAN_ADDITIONAL'] as $text) {
+        foreach ($data['details'] as $text) {
             $parts = explode(':', $text, 2);
 
             if (count($parts) === 2) {
-                $params['SiteCheck.Additional'] .= GddysecTemplate::getSnippet(
+                /* prefer local version number over SiteCheck's */
+                if (strpos($parts[0], 'WordPress version') !== false) {
+                    continue;
+                }
+
+                /* redundant; we already know the CMS is WordPress */
+                if (strpos($parts[0], 'CMS') !== false) {
+                    continue;
+                }
+
+                $params['SiteCheck.Metadata'] .= GddysecTemplate::getSnippet(
                     'sitecheck-details',
                     array(
-                        'SiteCheck.Title' => $parts[0],
-                        'SiteCheck.Value' => $parts[1],
+                        'SiteCheck.Title' => trim($parts[0]),
+                        'SiteCheck.Value' => trim($parts[1]),
                     )
                 );
             }
@@ -154,6 +234,11 @@ class GddysecSiteCheck
         return GddysecTemplate::getSection('sitecheck-details', $params);
     }
 
+    /**
+     * Generates the HTML section for the SiteCheck malware.
+     *
+     * @return string HTML code to render the malware section.
+     */
     public static function malware()
     {
         $params = array();
@@ -174,30 +259,37 @@ class GddysecSiteCheck
             foreach ($data['MALWARE']['WARN'] as $mal) {
                 $info = self::malwareDetails($mal);
 
-                if (!$info) {
-                    continue;
+                if ($info) {
+                    $params['Malware.Content'] .= GddysecTemplate::getSnippet(
+                        'sitecheck-malware',
+                        array(
+                            'Malware.InfectedURL' => $info['infected_url'],
+                            'Malware.MalwareType' => $info['malware_type'],
+                            'Malware.MalwareDocs' => $info['malware_docs'],
+                            'Malware.AlertMessage' => $info['alert_message'],
+                            'Malware.MalwarePayload' => $info['malware_payload'],
+                        )
+                    );
                 }
-
-                $params['Malware.Content'] .= GddysecTemplate::getSnippet(
-                    'sitecheck-malware',
-                    array(
-                        'Malware.InfectedURL' => $info['infected_url'],
-                        'Malware.MalwareType' => $info['malware_type'],
-                        'Malware.MalwareDocs' => $info['malware_docs'],
-                        'Malware.AlertMessage' => $info['alert_message'],
-                        'Malware.MalwarePayload' => $info['malware_payload'],
-                    )
-                );
             }
         }
 
         return GddysecTemplate::getSection('sitecheck-malware', $params);
     }
 
+    /**
+     * Generates the HTML section for the SiteCheck blacklist.
+     *
+     * @return string HTML code to render the blacklist section.
+     */
     public static function blacklist()
     {
         $params = array();
         $data = self::scanAndCollectData();
+
+        if (!isset($data['BLACKLIST']) || !is_array($data['BLACKLIST'])) {
+            return ''; /* there is not enough information to render */
+        }
 
         $params['Blacklist.Title'] = 'Not Blacklisted';
         $params['Blacklist.Color'] = 'green';
@@ -231,6 +323,11 @@ class GddysecSiteCheck
         return GddysecTemplate::getSection('sitecheck-blacklist', $params);
     }
 
+    /**
+     * Generates the HTML section for the SiteCheck recommendations.
+     *
+     * @return string HTML code to render the recommendations section.
+     */
     public static function recommendations()
     {
         $params = array();
@@ -260,28 +357,35 @@ class GddysecSiteCheck
         return GddysecTemplate::getSection('sitecheck-recommendations', $params);
     }
 
+    /**
+     * Returns the title for the iFrames section.
+     *
+     * @return string Title for the iFrames section.
+     */
     public static function iFramesTitle()
     {
         $data = self::scanAndCollectData();
 
-        if (!isset($data['LINKS']['IFRAME'])) {
-            return 'No iFrames Found';
-        }
-
-        return sprintf('%d iFrames Found', count($data['LINKS']['IFRAME']));
+        return sprintf('iFrames: %d', @count($data['LINKS']['IFRAME']));
     }
 
+    /**
+     * Returns the title for the links section.
+     *
+     * @return string Title for the links section.
+     */
     public static function linksTitle()
     {
         $data = self::scanAndCollectData();
 
-        if (!isset($data['LINKS']['URL'])) {
-            return 'No Links Found';
-        }
-
-        return sprintf('%d Links Found', count($data['LINKS']['URL']));
+        return sprintf('Links: %d', @count($data['LINKS']['URL']));
     }
 
+    /**
+     * Returns the title for the scripts section.
+     *
+     * @return string Title for the scripts section.
+     */
     public static function scriptsTitle()
     {
         $data = self::scanAndCollectData();
@@ -295,97 +399,50 @@ class GddysecSiteCheck
             $total += count($data['LINKS']['JSEXTERNAL']);
         }
 
-        if ($total === 0) {
-            return 'No Scripts Found';
-        }
-
-        return sprintf('%d Scripts Found', $total);
+        return sprintf('Scripts: %d', $total);
     }
 
+    /**
+     * Returns the content for the iFrames section.
+     *
+     * @return string Content for the iFrames section.
+     */
     public static function iFramesContent()
     {
-        $params = array();
         $data = self::scanAndCollectData();
-
-        if (!isset($data['LINKS']['IFRAME'])) {
-            return ''; /* empty content */
-        }
-
-        $params['SiteCheck.Resources'] = '';
-
-        foreach ($data['LINKS']['IFRAME'] as $url) {
-            $params['SiteCheck.Resources'] .= GddysecTemplate::getSnippet(
-                'sitecheck-links',
-                array(
-                    'SiteCheck.URL' => $url,
-                )
-            );
-        }
-
-        return GddysecTemplate::getSection('sitecheck-links', $params);
+        return isset($data['LINKS']['IFRAME']) ? $data['LINKS']['IFRAME'] : array();
     }
 
+    /**
+     * Returns the content for the links section.
+     *
+     * @return string Content for the links section.
+     */
     public static function linksContent()
     {
-        $params = array();
         $data = self::scanAndCollectData();
-
-        if (!isset($data['LINKS']['URL'])) {
-            return ''; /* empty content */
-        }
-
-        $params['SiteCheck.Resources'] = '';
-
-        foreach ($data['LINKS']['URL'] as $url) {
-            $params['SiteCheck.Resources'] .= GddysecTemplate::getSnippet(
-                'sitecheck-links',
-                array(
-                    'SiteCheck.URL' => $url,
-                )
-            );
-        }
-
-        return GddysecTemplate::getSection('sitecheck-links', $params);
+        return isset($data['LINKS']['URL']) ? $data['LINKS']['URL'] : array();
     }
 
+    /**
+     * Returns the content for the scripts section.
+     *
+     * @return array Content for the scripts section.
+     */
     public static function scriptsContent()
     {
-        $total = 0;
-        $params = array();
+        $links = array();
         $data = self::scanAndCollectData();
 
-        $params['SiteCheck.Resources'] = '';
-
         if (isset($data['LINKS']['JSLOCAL'])) {
-            foreach ($data['LINKS']['JSLOCAL'] as $url) {
-                $total++;
-
-                $params['SiteCheck.Resources'] .= GddysecTemplate::getSnippet(
-                    'sitecheck-links',
-                    array(
-                        'SiteCheck.URL' => $url,
-                    )
-                );
-            }
+            $links = array_merge($links, $data['LINKS']['JSLOCAL']);
         }
 
         if (isset($data['LINKS']['JSEXTERNAL'])) {
-            foreach ($data['LINKS']['JSEXTERNAL'] as $url) {
-                $total++;
-                $params['SiteCheck.Resources'] .= GddysecTemplate::getSnippet(
-                    'sitecheck-links',
-                    array(
-                        'SiteCheck.URL' => $url,
-                    )
-                );
-            }
+            $links = array_merge($links, $data['LINKS']['JSEXTERNAL']);
         }
 
-        if ($total === 0) {
-            return ''; /* empty content */
-        }
-
-        return GddysecTemplate::getSection('sitecheck-links', $params);
+        return $links;
     }
 
     /**
@@ -394,10 +451,10 @@ class GddysecSiteCheck
      * @param  array $malware Array with two entries with basic malware information.
      * @return array          Detailed information of the malware found by SiteCheck.
      */
-    private static function malwareDetails($malware = array())
+    public static function malwareDetails($malware = array())
     {
         if (count($malware) < 2) {
-            return false;
+            return array(/* empty details */);
         }
 
         $data = array(
@@ -413,21 +470,93 @@ class GddysecSiteCheck
 
         if (isset($alert_parts[1])) {
             $data['alert_message'] = $alert_parts[0];
-            $data['infected_url'] = $alert_parts[1];
+            $data['infected_url'] = trim($alert_parts[1]);
         }
 
         // Extract the information from the malware message.
         $malware_parts = explode("\n", $malware[1]);
 
         if (isset($malware_parts[1])) {
-            if (@preg_match('/(.+)\. Details: (.+)/', $malware_parts[0], $match)) {
-                $data['malware_type'] = $match[1];
-                $data['malware_docs'] = $match[2];
+            $pattern = ".\x20Details:\x20";
+            if (strpos($malware_parts[0], $pattern) !== false) {
+                $offset = strpos($malware_parts[0], $pattern);
+                $data['malware_type'] = substr($malware_parts[0], 0, $offset);
+                $data['malware_docs'] = substr($malware_parts[0], $offset + 11);
             }
 
             $data['malware_payload'] = trim($malware_parts[1]);
         }
 
         return $data;
+    }
+
+    /**
+     * Returns a JSON-encoded object with the malware scan results.
+     *
+     * @codeCoverageIgnore - Notice that there is a test case that covers this
+     * code, but since the WP-Send-JSON method uses die() to stop any further
+     * output it means that XDebug cannot cover the next line, leaving a report
+     * with a missing line in the coverage. Since the test case takes care of
+     * the functionality of this code we will assume that it is fully covered.
+     *
+     * @return void
+     */
+    public static function ajaxMalwareScan()
+    {
+        if (GddysecRequest::post('form_action') !== 'malware_scan') {
+            return;
+        }
+
+        ob_start();
+
+        $response = array();
+
+        $response['malware'] = GddysecSiteCheck::malware();
+        $response['blacklist'] = GddysecSiteCheck::blacklist();
+        $response['recommendations'] = GddysecSiteCheck::recommendations();
+
+        $response['iframes'] = array(
+            'title' => GddysecSiteCheck::iFramesTitle(),
+            'content' => GddysecSiteCheck::iFramesContent(),
+        );
+        $response['links'] = array(
+            'title' => GddysecSiteCheck::linksTitle(),
+            'content' => GddysecSiteCheck::linksContent(),
+        );
+        $response['scripts'] = array(
+            'title' => GddysecSiteCheck::scriptsTitle(),
+            'content' => GddysecSiteCheck::scriptsContent(),
+        );
+
+        $errors = ob_get_clean(); /* capture possible errors */
+
+        if (!empty($errors)) {
+            $response['malware'] = '';
+            $response['blacklist'] = '';
+            $response['recommendations'] = '';
+        }
+
+        wp_send_json($response, 200);
+    }
+
+    /**
+     * Returns the HTML to configure the API SiteCheck service.
+     *
+     * @return string HTML for the API SiteCheck service option.
+     */
+    public static function targetURLOption()
+    {
+        $params = array();
+
+        if (GddysecInterface::checkNonce()) {
+            $custom = GddysecRequest::post(':sitecheck_target');
+            if ($custom !== false) {
+                GddysecOption::updateOption(':sitecheck_target', $custom);
+            }
+        }
+
+        $params['SiteCheck.Target'] = self::targetURL();
+
+        return GddysecTemplate::getSection('sitecheck-target', $params);
     }
 }

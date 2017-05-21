@@ -1,5 +1,19 @@
 <?php
 
+/**
+ * Code related to the settings.php interface.
+ *
+ * PHP version 5
+ *
+ * @category   Library
+ * @package    GoDaddy
+ * @subpackage GoDaddySecurity
+ * @author     Daniel Cid <dcid@sucuri.net>
+ * @copyright  2017 Sucuri Inc. - GoDaddy LLC.
+ * @license    https://www.godaddy.com/ - Proprietary
+ * @link       https://wordpress.org/plugins/godaddy-security
+ */
+
 if (!defined('GDDYSEC_INIT') || GDDYSEC_INIT !== true) {
     if (!headers_sent()) {
         /* Report invalid access if possible. */
@@ -8,36 +22,17 @@ if (!defined('GDDYSEC_INIT') || GDDYSEC_INIT !== true) {
     exit(1);
 }
 
+/**
+ * Abstract class for the settings page.
+ *
+ * @category   Library
+ * @package    GoDaddy
+ * @subpackage GoDaddySecurity
+ * @author     Daniel Cid <dcid@sucuri.net>
+ * @copyright  2017 Sucuri Inc. - GoDaddy LLC.
+ * @license    https://www.godaddy.com/ - Proprietary
+ * @link       https://wordpress.org/plugins/godaddy-security
+ */
 class GddysecSettings extends GddysecOption
 {
-    public static function initialPage()
-    {
-        GddysecInterface::check_permissions();
-
-        $params = array();
-        $nonce = GddysecInterface::check_nonce();
-
-        $params['PageTitle'] = 'Settings';
-        $params['Settings.General'] = gddysec_settings_general($nonce);
-        $params['Settings.Alerts'] = gddysec_settings_alert($nonce);
-
-        echo GddysecTemplate::getTemplate('settings', $params);
-    }
-}
-
-/**
- * Handle an Ajax request for this specific page.
- *
- * @return mixed.
- */
-function gddysec_settings_ajax()
-{
-    GddysecInterface::check_permissions();
-
-    if (GddysecInterface::check_nonce()) {
-        gddysec_settings_ignorescan_ajax();
-        gddysec_settings_apiservice_https_ajax();
-    }
-
-    wp_die();
 }

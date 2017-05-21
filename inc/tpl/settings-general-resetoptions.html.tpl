@@ -1,27 +1,9 @@
 
-<div class="gddysec-boxshadow">
-    <h3>Reset Options</h3>
+<div class="gddysec-panel">
+    <h3 class="gddysec-title">Reset Security Logs, Hardening and Settings</h3>
 
     <div class="inside">
-        <p>
-            This action will delete all the entries inserted by the plugin in the options
-            table of the current database, including the API key. Make sure that you
-            understand the consequences of this operation before you proceed, this can not
-            be reverted and you may lose access to the data that was already collected by
-            the plugin. This will also revert the hardening applied in the WordPress core
-            directories, but not the hardening applied to other parts of the site as they
-            can not be easily reverted, refer to the hardening page for more information.
-        </p>
-
-        <p>
-            The information stored in the security logs will be deleted as well, but the
-            information that was previously sent to the API service will remain untouched
-            as there is no easy way to guarantee that this action is not being requested
-            by a malicious user looking for a way to hide his fingerprints after an attack.
-            If you are the real owner of this website and want to delete the information
-            stored in the Sucuri servers then send an email to our support team and we may
-            consider the case.
-        </p>
+        <p>This action will trigger the deactivation / uninstallation process of the plugin. All local security logs, hardening and settings will be deleted. Notice that the security logs stored in the API service will not be deleted, this is to prevent tampering from a malicious user. You can request a new API key if you want to start from scratch.</p>
 
         <form action="%%GDDYSEC.URL.Settings%%" method="post">
             <input type="hidden" name="gddysec_page_nonce" value="%%GDDYSEC.PageNonce%%" />
@@ -32,7 +14,7 @@
                     <span>I understand that this operation can not be reverted.</span>
                 </label>
             </p>
-            <button type="submit" name="gddysec_reset_options" class="button-primary button-danger">Reset Everything</button>
+            <button type="submit" name="gddysec_reset_options" class="button button-primary">Submit</button>
         </form>
     </div>
 </div>

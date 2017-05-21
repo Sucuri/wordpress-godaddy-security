@@ -35,56 +35,6 @@
         </tr>
 
         <tr>
-            <td style="background:#00a63f;font-size:20px;font-weight:bold;color:#fff;border:1px solid #006d29;border-bottom:0;padding:30px;text-align:center">
-                Need help? Contact our support team at <a href="https://wordpress.org/support/plugin/godaddy-security" target="_blank" style="color:#fff">WordPress Forums</a>
-            </td>
-        </tr>
-
-        <tr>
-            <td style="background:#333;color:#fff;padding:30px">
-                <table style="margin:0 auto">
-                    <tbody>
-                        <tr>
-                            <td style="vertical-align:top">
-                                <h2 style="color:#fff;font-size:20px;margin:0;margin-bottom:20px">About GoDaddy</h2>
-
-                                <ul style="list-style:none;margin:0;padding:0">
-                                    <li><a href="https://aboutus.godaddy.net/" target="_blank" style="color:#fff;font-size:13px">About Us</a></li>
-                                    <li><a href="https://www.godaddy.com/contact-us.aspx" target="_blank" style="color:#fff;font-size:13px">Contact Us</a></li>
-                                    <li><a href="https://newsroom.godaddy.net/" target="_blank" style="color:#fff;font-size:13px">Newsroom</a></li>
-                                    <li><a href="https://www.godaddy.com/godaddy-cares" target="_blank" style="color:#fff;font-size:13px">Corporate Responsibility</a></li>
-                                    <li><a href="https://www.godaddy.com/legal-agreements.aspx" target="_blank" style="color:#fff;font-size:13px">Legal</a></li>
-                                    <li><a href="https://www.godaddy.com/garage/" target="_blank" style="color:#fff;font-size:13px">GoDaddy Blog</a></li>
-                                    <li><a href="http://blakesblog.com/" target="_blank" style="color:#fff;font-size:13px">Blake's Blog</a></li>
-                                </ul>
-                            </td>
-
-                            <td style="vertical-align:top;padding:0 60px">
-                                <h2 style="color:#fff;font-size:20px;margin:0;margin-bottom:20px">Support</h2>
-
-                                <ul style="list-style:none;margin:0;padding:0">
-                                    <li><a href="https://www.godaddy.com/help" target="_blank" style="color:#fff;font-size:13px">Product Support</a></li>
-                                    <li><a href="https://www.godaddy.com/community" target="_blank" style="color:#fff;font-size:13px">Community</a></li>
-                                    <li><a href="https://supportcenter.godaddy.com/AbuseReport" target="_blank" style="color:#fff;font-size:13px">Report Abuse</a></li>
-                                </ul>
-                            </td>
-
-                            <td style="vertical-align:top">
-                                <h2 style="color:#fff;font-size:20px;margin:0;margin-bottom:20px">Shopping</h2>
-
-                                <ul style="list-style:none;margin:0;padding:0">
-                                    <li><a href="https://www.godaddy.com/catalog.aspx" target="_blank" style="color:#fff;font-size:13px">Product Catalog</a></li>
-                                    <li><a href="https://www.godaddy.com/domains/domain-name-search" target="_blank" style="color:#fff;font-size:13px">Find a Domain</a></li>
-                                    <li><a href="https://www.godaddy.com/reseller-program" target="_blank" style="color:#fff;font-size:13px">Reseller Programs</a></li>
-                                </ul>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-            </td>
-        </tr>
-
-        <tr>
             <td style="background:#fff;border:1px solid #ccc;border-top:0;font-size:10px;padding:30px;text-align:center">
                 Copyright &copy; 1999 - %%GDDYSEC.Year%% GoDaddy Operating Company, LLC. All Rights Reserved.
             </td>

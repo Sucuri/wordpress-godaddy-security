@@ -1,5 +1,19 @@
 <?php
 
+/**
+ * Code related to the settings-general.php interface.
+ *
+ * PHP version 5
+ *
+ * @category   Library
+ * @package    GoDaddy
+ * @subpackage GoDaddySecurity
+ * @author     Daniel Cid <dcid@sucuri.net>
+ * @copyright  2017 Sucuri Inc. - GoDaddy LLC.
+ * @license    https://www.godaddy.com/ - Proprietary
+ * @link       https://wordpress.org/plugins/godaddy-security
+ */
+
 if (!defined('GDDYSEC_INIT') || GDDYSEC_INIT !== true) {
     if (!headers_sent()) {
         /* Report invalid access if possible. */
@@ -9,32 +23,11 @@ if (!defined('GDDYSEC_INIT') || GDDYSEC_INIT !== true) {
 }
 
 /**
- * Read and parse the content of the general settings template.
+ * Renders a page with information about the reset options feature.
  *
- * @return string Parsed HTML code for the general settings panel.
+ * @param bool $nonce True if the CSRF protection worked.
+ * @return string Page with information about the reset options.
  */
-function gddysec_settings_general($nonce)
-{
-    // Process all form submissions.
-    gddysec_settings_form_submissions($nonce);
-
-    $params = array();
-
-    // Keep the reset options panel and form submission processor before anything else.
-    $params['Settings.ResetOptions'] = gddysec_settings_general_resetoptions($nonce);
-
-    // Build HTML code for the additional general settings panels.
-    $params['Settings.ApiKey'] = gddysec_settings_general_apikey($nonce);
-    $params['Settings.DataStorage'] = gddysec_settings_general_datastorage($nonce);
-    $params['Settings.ReverseProxy'] = gddysec_settings_general_reverseproxy($nonce);
-    $params['Settings.IPDiscoverer'] = gddysec_settings_general_ipdiscoverer($nonce);
-    $params['Settings.CommentMonitor'] = gddysec_settings_general_commentmonitor($nonce);
-    $params['Settings.CoreFilesLanguage'] = gddysec_settings_general_corefiles_language($nonce);
-    $params['Settings.CoreFilesCache'] = gddysec_settings_general_corefiles_cache($nonce);
-
-    return GddysecTemplate::getSection('settings-general', $params);
-}
-
 function gddysec_settings_general_resetoptions($nonce)
 {
     // Reset all the plugin's options.
@@ -42,38 +35,13 @@ function gddysec_settings_general_resetoptions($nonce)
         $process = GddysecRequest::post(':process_form');
 
         if (intval($process) === 1) {
-            // Notify the event before the API key is removed.
-            $message = 'GoDaddy Security plugin options were reset';
-            GddysecEvent::report_critical_event($message);
-            GddysecEvent::notify_event('plugin_change', $message);
+            $message = 'Local security logs, hardening and settings were deleted';
 
-            // Remove all plugin options from the database.
-            GddysecOption::deletePluginOptions();
+            gddysecResetAndDeactivate(); /* simulate plugin deactivation */
 
-            // Remove the scheduled tasks.
-            wp_clear_scheduled_hook('gddysec_scheduled_scan');
-
-            // Remove all the local security logs.
-            @unlink(Gddysec::datastore_folder_path('.htaccess'));
-            @unlink(Gddysec::datastore_folder_path('index.html'));
-            @unlink(Gddysec::datastore_folder_path(GDDYSEC . '-failedlogins.php'));
-            @unlink(Gddysec::datastore_folder_path(GDDYSEC . '-integrity.php'));
-            @unlink(Gddysec::datastore_folder_path(GDDYSEC . '-lastlogins.php'));
-            @unlink(Gddysec::datastore_folder_path(GDDYSEC . '-oldfailedlogins.php'));
-            @unlink(Gddysec::datastore_folder_path(GDDYSEC . '-plugindata.php'));
-            @unlink(Gddysec::datastore_folder_path(GDDYSEC . '-sitecheck.php'));
-            @unlink(Gddysec::datastore_folder_path(GDDYSEC . '-settings.php'));
-            @unlink(Gddysec::datastore_folder_path(GDDYSEC . '-trustip.php'));
-            @rmdir(Gddysec::datastore_folder_path());
-
-            // Revert hardening of core directories (includes, content, uploads).
-            GddysecHardening::dewhitelist('ms-files.php', 'wp-includes');
-            GddysecHardening::dewhitelist('wp-tinymce.php', 'wp-includes');
-            GddysecHardening::unharden_directory(ABSPATH . '/wp-includes');
-            GddysecHardening::unharden_directory(WP_CONTENT_DIR . '/uploads');
-            GddysecHardening::unharden_directory(WP_CONTENT_DIR);
-
-            GddysecInterface::info('Plugin options, core directory hardening, and security logs were reset');
+            GddysecEvent::reportCriticalEvent($message);
+            GddysecEvent::notifyEvent('plugin_change', $message);
+            GddysecInterface::info('Local security logs, hardening and settings were deleted');
         } else {
             GddysecInterface::error('You need to confirm that you understand the risk of this operation.');
         }
@@ -82,6 +50,12 @@ function gddysec_settings_general_resetoptions($nonce)
     return GddysecTemplate::getSection('settings-general-resetoptions');
 }
 
+/**
+ * Renders a page with information about the API key feature.
+ *
+ * @param bool $nonce True if the CSRF protection worked.
+ * @return string Page with information about the API key.
+ */
 function gddysec_settings_general_apikey($nonce)
 {
     $params = array();
@@ -93,44 +67,40 @@ function gddysec_settings_general_apikey($nonce)
     $display_manual_key_form = (bool) (GddysecRequest::post(':recover_key') !== false);
 
     if ($nonce) {
-        if (!empty($_POST) && GddysecOption::settingsInTextFile()) {
-            $fpath = GddysecOption::optionsFilePath();
-
-            if (!is_writable($fpath)) {
-                GddysecInterface::error(
-                    'Storage is not writable: <code>'
-                    . $fpath . '</code>'
-                );
-            }
-        }
-
         // Remove API key from the local storage.
-        if (GddysecRequest::post(':remove_api_key') !== false) {
-            GddysecAPI::setPluginKey('');
+        $api_key = GddysecAPI::getPluginKey();
+        if (GddysecRequest::post(':remove_api_key') !== false
+            && GddysecAPI::setPluginKey('') !== false
+        ) {
             wp_clear_scheduled_hook('gddysec_scheduled_scan');
-            GddysecEvent::report_critical_event('GoDaddy Security API key was deleted.');
-            GddysecEvent::notify_event('plugin_change', 'GoDaddy Security API key removed');
+
+            $api_key = Gddysec::escape($api_key);
+            GddysecEvent::reportCriticalEvent('GoDaddy Security API key has been deleted.');
+            GddysecEvent::notifyEvent('plugin_change', 'GoDaddy Security API key removed');
+            GddysecInterface::info('GoDaddy Security API key has been deleted <code>' . $api_key . '</code>');
         }
 
         // Save API key after it was recovered by the administrator.
-        if ($api_key = GddysecRequest::post(':manual_api_key')) {
+        $api_key = GddysecRequest::post(':manual_api_key');
+
+        if ($api_key) {
             GddysecAPI::setPluginKey($api_key, true);
-            GddysecEvent::schedule_task();
-            GddysecEvent::report_info_event('GoDaddy Security API key was added manually.');
+            GddysecEvent::installScheduledTask();
+            GddysecEvent::reportInfoEvent('GoDaddy Security API key was added manually.');
         }
 
         // Generate new API key from the API service.
         if (GddysecRequest::post(':plugin_api_key') !== false) {
-            $user_id = GddysecRequest::post(':setup_user');
-            $user_obj = Gddysec::get_user_by_id($user_id);
+            $user_id = (int) GddysecRequest::post(':setup_user');
+            $user_obj = Gddysec::getUserByID($user_id);
 
-            if ($user_obj !== false && user_can($user_obj, 'administrator')) {
+            if ($user_obj && user_can($user_obj, 'administrator')) {
                 // Send request to generate new API key or display form to set manually.
                 if (GddysecAPI::registerSite($user_obj->user_email)) {
-                    $api_registered_modal = GddysecTemplate::getModal('settings-apiregistered', array(
-                        'Title' => 'Site registered successfully',
-                        'CssClass' => 'gddysec-apikey-registered',
-                    ));
+                    $api_registered_modal = GddysecTemplate::getModal(
+                        'settings-apiregistered',
+                        array('Title' => 'Site registered successfully')
+                    );
                 } else {
                     $display_manual_key_form = true;
                 }
@@ -139,30 +109,33 @@ function gddysec_settings_general_apikey($nonce)
 
         // Recover API key through the email registered previously.
         if (GddysecRequest::post(':recover_key') !== false) {
-            $_GET['recover'] = 'true';
-            GddysecAPI::recoverKey();
-            GddysecEvent::report_info_event('Recovery of the GoDaddy Security API key was requested.');
+            if (GddysecAPI::recoverKey()) {
+                $_GET['recover'] = 'true'; /* display modal window */
+                GddysecEvent::reportInfoEvent('API key recovery (email sent)');
+            } else {
+                GddysecEvent::reportInfoEvent('API key recovery (failure)');
+            }
         }
     }
 
     $api_key = GddysecAPI::getPluginKey();
 
     if (GddysecRequest::get('recover') !== false) {
-        $api_recovery_modal = GddysecTemplate::getModal('settings-apirecovery', array(
-            'Title' => 'Plugin API Key Recovery',
-            'CssClass' => 'gddysec-apirecovery',
-        ));
+        $api_recovery_modal = GddysecTemplate::getModal(
+            'settings-apirecovery',
+            array('Title' => 'Plugin API Key Recovery')
+        );
     }
 
     // Check whether the domain name is valid or not.
     if (!$api_key) {
-        $clean_domain = Gddysec::get_top_level_domain();
+        $clean_domain = Gddysec::getTopLevelDomain();
         $domain_address = @gethostbyname($clean_domain);
         $invalid_domain = (bool) ($domain_address === $clean_domain);
     }
 
     $params['APIKey'] = (!$api_key ? '(not set)' : $api_key);
-    $params['APIKey.RecoverVisibility'] = GddysecTemplate::visibility(!$api_key && !$display_manual_key_form);
+    $params['APIKey.RecoverVisibility'] = GddysecTemplate::visibility(!$api_key);
     $params['APIKey.ManualKeyFormVisibility'] = GddysecTemplate::visibility($display_manual_key_form);
     $params['APIKey.RemoveVisibility'] = GddysecTemplate::visibility((bool) $api_key);
     $params['InvalidDomainVisibility'] = GddysecTemplate::visibility($invalid_domain);
@@ -172,58 +145,219 @@ function gddysec_settings_general_apikey($nonce)
     return GddysecTemplate::getSection('settings-general-apikey', $params);
 }
 
+/**
+ * Renders a page with information about the data storage feature.
+ *
+ * @param bool $nonce True if the CSRF protection worked.
+ * @return string Page with information about the data storage.
+ */
 function gddysec_settings_general_datastorage($nonce)
 {
     $params = array();
     $files = array(
         '', /* <root> */
+        'auditlogs',
         'auditqueue',
+        'blockedusers',
         'failedlogins',
+        'hookdata',
+        'ignorescanning',
         'integrity',
+        'lastlogins',
+        'oldfailedlogins',
+        'plugindata',
         'settings',
         'sitecheck',
+        'trustip',
     );
 
-    $counter = 0;
-    $params['DataStorage.Files'] = '';
-    $params['DatastorePath'] = GddysecOption::get_option(':datastore_path');
+    $params['Storage.Files'] = '';
+    $params['Storage.Path'] = Gddysec::dataStorePath();
+
+    if ($nonce) {
+        $filenames = GddysecRequest::post(':filename', '_array');
+
+        if ($filenames) {
+            $deleted = 0;
+
+            foreach ($filenames as $filename) {
+                $short = substr($filename, 7); /* drop directroy path */
+                $short = substr($short, 0, -4); /* drop file extension */
+
+                if (!$short || empty($short) || !in_array($short, $files)) {
+                    continue; /* prevent path traversal */
+                }
+
+                $filepath = Gddysec::dataStorePath($filename);
+
+                if (!file_exists($filepath) || is_dir($filepath)) {
+                    continue; /* there is nothing to reset */
+                }
+
+                /* ignore write permissions */
+                if (@unlink($filepath)) {
+                    $deleted++;
+                }
+            }
+
+            GddysecInterface::info(
+                sprintf(
+                    '%d out of %d files has been deleted',
+                    $deleted,
+                    count($filenames)
+                )
+            );
+        }
+    }
 
     foreach ($files as $name) {
-        $counter++;
-        $fname = ($name ? sprintf('%s-%s.php', GDDYSEC, $name) : '');
-        $fpath = Gddysec::datastore_folder_path($fname);
-        $exists = (file_exists($fpath) ? 'Yes' : 'No');
-        $iswritable = (is_writable($fpath) ? 'Yes' : 'No');
-        $css_class = ($counter % 2 === 0) ? 'alternate' : '';
+        $fsize = 0;
+        $fname = ($name ? sprintf('gddysec-%s.php', $name) : '');
+        $fpath = Gddysec::dataStorePath($fname);
         $disabled = 'disabled="disabled"';
+        $iswritable = 'Not Writable';
+        $exists = 'Does Not Exist';
+        $labelExistence = 'danger';
+        $labelWritability = 'default';
 
-        if ($exists === 'Yes' && $iswritable === 'Yes') {
-            $disabled = ''; /* Allow file deletion */
+        if (file_exists($fpath)) {
+            $fsize = @filesize($fpath);
+            $exists = 'Exists';
+            $labelExistence = 'success';
+            $labelWritability = 'danger';
+
+            if (is_writable($fpath)) {
+                $disabled = ''; /* Allow file deletion */
+                $iswritable = 'Writable';
+                $labelWritability = 'success';
+            }
         }
 
-        // Remove unnecessary parts from the file path.
-        $fpath = str_replace(ABSPATH, '/', $fpath);
+        $params['Storage.Filename'] = $fname;
+        $params['Storage.Filepath'] = str_replace(ABSPATH, '', $fpath);
+        $params['Storage.Filesize'] = Gddysec::humanFileSize($fsize);
+        $params['Storage.Exists'] = $exists;
+        $params['Storage.IsWritable'] = $iswritable;
+        $params['Storage.DisabledInput'] = $disabled;
+        $params['Storage.Existence'] = $labelExistence;
+        $params['Storage.Writability'] = $labelWritability;
 
-        $params['DataStorage.Files'] .= GddysecTemplate::getSnippet('settings-datastorage-files', array(
-            'DataStorage.CssClass' => $css_class,
-            'DataStorage.Fname' => $fname,
-            'DataStorage.Fpath' => $fpath,
-            'DataStorage.Exists' => $exists,
-            'DataStorage.IsWritable' => $iswritable,
-            'DataStorage.DisabledInput' => $disabled,
-        ));
+        if (is_dir($fpath)) {
+            $params['Storage.Filesize'] = '';
+            $params['Storage.DisabledInput'] = 'disabled="disabled"';
+        }
+
+        $params['Storage.Files'] .= GddysecTemplate::getSnippet('settings-general-datastorage', $params);
     }
 
     return GddysecTemplate::getSection('settings-general-datastorage', $params);
 }
 
+/**
+ * Returns the path to the local event monitoring file.
+ *
+ * The website owner can configure the plugin to send a copy of the security
+ * events to a local file that can be integrated with other monitoring systems
+ * like OSSEC, OpenVAS, NewRelic and similar.
+ *
+ * @return string|bool Path to the log file, false if disabled.
+ */
+function gddysec_selfhosting_fpath()
+{
+    $monitor = GddysecOption::getOption(':selfhosting_monitor');
+    $monitor_fpath = GddysecOption::getOption(':selfhosting_fpath');
+    $folder = dirname($monitor_fpath);
+
+    if ($monitor === 'enabled'
+        && !empty($monitor_fpath)
+        && is_writable($folder)
+    ) {
+        return $monitor_fpath;
+    }
+
+    return false;
+}
+
+/**
+ * Renders a page with information about the self-hosting feature.
+ *
+ * @param bool $nonce True if the CSRF protection worked.
+ * @return string Page with information about the self-hosting.
+ */
+function gddysec_settings_general_selfhosting($nonce)
+{
+    $params = array();
+
+    $params['SelfHosting.DisabledVisibility'] = 'visible';
+    $params['SelfHosting.Status'] = 'Enabled';
+    $params['SelfHosting.SwitchText'] = 'Disable';
+    $params['SelfHosting.SwitchValue'] = 'disable';
+    $params['SelfHosting.FpathVisibility'] = 'hidden';
+    $params['SelfHosting.Fpath'] = '';
+
+    if ($nonce) {
+        // Set a file path for the self-hosted event monitor.
+        $monitor_fpath = GddysecRequest::post(':selfhosting_fpath');
+
+        if ($monitor_fpath !== false) {
+            if (empty($monitor_fpath)) {
+                $message = 'Log exporter was disabled';
+
+                GddysecEvent::reportInfoEvent($message);
+                GddysecOption::deleteOption(':selfhosting_fpath');
+                GddysecOption::updateOption(':selfhosting_monitor', 'disabled');
+                GddysecEvent::notifyEvent('plugin_change', $message);
+                GddysecInterface::info('The log exporter feature has been disabled');
+            } elseif (strpos($monitor_fpath, $_SERVER['DOCUMENT_ROOT']) !== false) {
+                GddysecInterface::error('File should not be publicly accessible.');
+            } elseif (file_exists($monitor_fpath)) {
+                GddysecInterface::error('File already exists and will not be overwritten.');
+            } elseif (!is_writable(dirname($monitor_fpath))) {
+                GddysecInterface::error('File parent directory is not writable.');
+            } else {
+                @file_put_contents($monitor_fpath, '', LOCK_EX);
+
+                $message = 'Log exporter file path was correctly set';
+
+                GddysecEvent::reportInfoEvent($message);
+                GddysecOption::updateOption(':selfhosting_monitor', 'enabled');
+                GddysecOption::updateOption(':selfhosting_fpath', $monitor_fpath);
+                GddysecEvent::notifyEvent('plugin_change', $message);
+                GddysecInterface::info('The log exporter feature has been enabled and the data file was successfully set.');
+            }
+        }
+    }
+
+    $monitor = GddysecOption::getOption(':selfhosting_monitor');
+    $monitor_fpath = GddysecOption::getOption(':selfhosting_fpath');
+
+    if ($monitor === 'disabled') {
+        $params['SelfHosting.Status'] = 'Disabled';
+        $params['SelfHosting.SwitchText'] = 'Enable';
+        $params['SelfHosting.SwitchValue'] = 'enable';
+    }
+
+    if ($monitor === 'enabled' && $monitor_fpath) {
+        $params['SelfHosting.DisabledVisibility'] = 'hidden';
+        $params['SelfHosting.FpathVisibility'] = 'visible';
+        $params['SelfHosting.Fpath'] = Gddysec::escape($monitor_fpath);
+    }
+
+    return GddysecTemplate::getSection('settings-general-selfhosting', $params);
+}
+
+/**
+ * Renders a page with information about the reverse proxy feature.
+ *
+ * @param bool $nonce True if the CSRF protection worked.
+ * @return string Page with information about the reverse proxy.
+ */
 function gddysec_settings_general_reverseproxy($nonce)
 {
     $params = array(
         'ReverseProxyStatus' => 'Enabled',
         'ReverseProxySwitchText' => 'Disable',
         'ReverseProxySwitchValue' => 'disable',
-        'ReverseProxySwitchCssClass' => 'button-danger',
     );
 
     // Enable or disable the reverse proxy support.
@@ -241,188 +375,170 @@ function gddysec_settings_general_reverseproxy($nonce)
         }
     }
 
-    if (GddysecOption::is_disabled(':revproxy')) {
+    if (GddysecOption::isDisabled(':revproxy')) {
         $params['ReverseProxyStatus'] = 'Disabled';
         $params['ReverseProxySwitchText'] = 'Enable';
         $params['ReverseProxySwitchValue'] = 'enable';
-        $params['ReverseProxySwitchCssClass'] = 'button-success';
     }
 
     return GddysecTemplate::getSection('settings-general-reverseproxy', $params);
 }
 
-function gddysec_settings_general_ipdiscoverer($nonce)
+/**
+ * Renders a page with information about the import export feature.
+ *
+ * @param bool $nonce True if the CSRF protection worked.
+ * @return string Page with information about the import export.
+ */
+function gddysec_settings_general_importexport($nonce)
 {
-    $params = array(
-        'TopLevelDomain' => 'Unknown',
-        'WebsiteHostName' => 'Unknown',
-        'WebsiteHostAddress' => 'Unknown',
-        'IsUsingCloudProxy' => 'Unknown',
-        'WebsiteURL' => 'Unknown',
-        'RemoteAddress' => '127.0.0.1',
-        'RemoteAddressHeader' => 'INVALID',
-        'AddrHeaderOptions' => '',
-        /* Switch form information. */
-        'DnsLookupsStatus' => 'Enabled',
-        'DnsLookupsSwitchText' => 'Disable',
-        'DnsLookupsSwitchValue' => 'disable',
-        'DnsLookupsSwitchCssClass' => 'button-danger',
-    );
-
-    // Get main HTTP header for IP retrieval.
-    $allowed_headers = Gddysec::allowedHttpHeaders(true);
-
-    // Configure the DNS lookups option for reverse proxy detection.
-    if ($nonce) {
-        $dns_lookups = GddysecRequest::post(':dns_lookups', '(en|dis)able');
-        $addr_header = GddysecRequest::post(':addr_header');
-
-        if ($dns_lookups) {
-            $action_d = $dns_lookups . 'd';
-            $message = 'DNS lookups for reverse proxy detection <code>' . $action_d . '</code>';
-
-            GddysecOption::update_option(':dns_lookups', $action_d);
-            GddysecEvent::report_info_event($message);
-            GddysecEvent::notify_event('plugin_change', $message);
-            GddysecInterface::info($message);
-        }
-
-        if ($addr_header) {
-            if ($addr_header === 'REMOTE_ADDR') {
-                GddysecOption::setAddrHeader('REMOTE_ADDR');
-                GddysecOption::setRevProxy('disable');
-            } else {
-                GddysecOption::setAddrHeader($addr_header);
-                GddysecOption::setRevProxy('enable');
-            }
-        }
-    }
-
-    if (GddysecOption::is_disabled(':dns_lookups')) {
-        $params['DnsLookupsStatus'] = 'Disabled';
-        $params['DnsLookupsSwitchText'] = 'Enable';
-        $params['DnsLookupsSwitchValue'] = 'enable';
-        $params['DnsLookupsSwitchCssClass'] = 'button-success';
-    }
-
-    $params['RemoteAddressHeader'] = Gddysec::remoteAddrHeader();
-    $params['RemoteAddress'] = Gddysec::remoteAddr();
-    $params['WebsiteURL'] = Gddysec::get_domain();
-    $params['AddrHeaderOptions'] = GddysecTemplate::selectOptions(
-        $allowed_headers,
-        GddysecOption::get_option(':addr_header')
-    );
-
-    return GddysecTemplate::getSection('settings-general-ipdiscoverer', $params);
-}
-
-function gddysec_settings_general_commentmonitor($nonce)
-{
-    $params = array(
-        'CommentMonitorStatus' => 'Enabled',
-        'CommentMonitorSwitchText' => 'Disable',
-        'CommentMonitorSwitchValue' => 'disable',
-        'CommentMonitorSwitchCssClass' => 'button-danger',
-    );
-
-    // Configure the comment monitor option.
-    if ($nonce) {
-        $monitor = GddysecRequest::post(':comment_monitor', '(en|dis)able');
-
-        if ($monitor) {
-            $action_d = $monitor . 'd';
-            $message = 'Comment monitor was <code>' . $action_d . '</code>';
-
-            GddysecOption::update_option(':comment_monitor', $action_d);
-            GddysecEvent::report_info_event($message);
-            GddysecEvent::notify_event('plugin_change', $message);
-            GddysecInterface::info($message);
-        }
-    }
-
-    if (GddysecOption::is_disabled(':comment_monitor')) {
-        $params['CommentMonitorStatus'] = 'Disabled';
-        $params['CommentMonitorSwitchText'] = 'Enable';
-        $params['CommentMonitorSwitchValue'] = 'enable';
-        $params['CommentMonitorSwitchCssClass'] = 'button-success';
-    }
-
-    return GddysecTemplate::getSection('settings-general-commentmonitor', $params);
-}
-
-function gddysec_settings_general_corefiles_language($nonce)
-{
+    $settings = array();
     $params = array();
-    $languages = Gddysec::languages();
+    $allowed = array(
+        ':addr_header',
+        ':api_key',
+        ':api_protocol',
+        ':api_service',
+        ':cloudproxy_apikey',
+        ':diff_utility',
+        ':dns_lookups',
+        ':email_subject',
+        ':emails_per_hour',
+        ':ignored_events',
+        ':lastlogin_redirection',
+        ':maximum_failed_logins',
+        ':notify_available_updates',
+        ':notify_bruteforce_attack',
+        ':notify_failed_login',
+        ':notify_plugin_activated',
+        ':notify_plugin_change',
+        ':notify_plugin_deactivated',
+        ':notify_plugin_deleted',
+        ':notify_plugin_installed',
+        ':notify_plugin_updated',
+        ':notify_post_publication',
+        ':notify_scan_checksums',
+        ':notify_settings_updated',
+        ':notify_success_login',
+        ':notify_theme_activated',
+        ':notify_theme_deleted',
+        ':notify_theme_editor',
+        ':notify_theme_installed',
+        ':notify_theme_updated',
+        ':notify_to',
+        ':notify_user_registration',
+        ':notify_website_updated',
+        ':notify_widget_added',
+        ':notify_widget_deleted',
+        ':prettify_mails',
+        ':revproxy',
+        ':selfhosting_fpath',
+        ':selfhosting_monitor',
+        ':use_wpmail',
+    );
 
-    if ($nonce) {
-        // Configure the language for the core integrity checks.
-        if ($language = GddysecRequest::post(':set_language')) {
-            if (array_key_exists($language, $languages)) {
-                $message = 'Language for the core integrity checks set to <code>' . $language . '</code>';
+    if ($nonce && GddysecRequest::post(':import') !== false) {
+        $process = GddysecRequest::post(':process_form');
 
-                GddysecOption::update_option(':language', $language);
-                GddysecEvent::report_auto_event($message);
-                GddysecEvent::notify_event('plugin_change', $message);
-                GddysecInterface::info($message);
-            } else {
-                GddysecInterface::error('Selected language is not supported.');
-            }
-        }
-    }
+        if (intval($process) === 1) {
+            $json = GddysecRequest::post(':settings');
+            $json = str_replace('\&quot;', '"', $json);
+            $data = @json_decode($json, true);
 
-    $language = GddysecOption::get_option(':language');
-    $params['Integrity.LanguageDropdown'] = GddysecTemplate::selectOptions($languages, $language);
+            if ($data) {
+                $count = 0;
+                $total = count($data);
 
-    return GddysecTemplate::getSection('settings-general-corefiles-language', $params);
-}
+                /* minimum length for option name */
+                $minLength = strlen(GDDYSEC . '_');
 
-function gddysec_settings_general_corefiles_cache($nonce)
-{
-    $params = array();
-    $fpath = Gddysec::datastore_folder_path(GDDYSEC . '-integrity.php');
+                foreach ($data as $option => $value) {
+                    if (strlen($option) <= $minLength) {
+                        continue;
+                    }
 
-    if ($nonce) {
-        // Reset core integrity files marked as fixed
-        if (GddysecRequest::post(':corefiles_cache')) {
-            if (file_exists($fpath)) {
-                if (@unlink($fpath)) {
-                    $message = 'Core integrity files marked as fixed were successfully reset.';
+                    $option_name = ':' . substr($option, $minLength);
 
-                    GddysecEvent::report_debug_event($message);
-                    GddysecInterface::info($message);
-                } else {
-                    GddysecInterface::error('Count not reset the cache, delete manually.');
+                    /* check if the option can be imported */
+                    if (!in_array($option_name, $allowed)) {
+                        continue;
+                    }
+
+                    GddysecOption::updateOption($option_name, $value);
+
+                    $count++;
                 }
+
+                GddysecInterface::info(
+                    sprintf(
+                        '%d out of %d option have been successfully imported',
+                        $count,
+                        $total
+                    )
+                );
             } else {
-                GddysecInterface::error('The cache file does not exists.');
+                GddysecInterface::error('Data is incorrectly encoded');
             }
+        } else {
+            GddysecInterface::error('You need to confirm that you understand the risk of this operation.');
         }
     }
 
-    $params['CoreFiles.CacheSize'] = Gddysec::human_filesize(@filesize($fpath));
-    $params['CoreFiles.CacheLifeTime'] = SUCURISCAN_SITECHECK_LIFETIME;
-    $params['CoreFiles.TableVisibility'] = 'hidden';
-    $params['CoreFiles.IgnoredFiles'] = '';
-    $cache = new GddysecCache('integrity');
-    $ignored_files = $cache->getAll();
-    $counter = 0;
+    foreach ($allowed as $option) {
+        $option_name = Gddysec::varPrefix($option);
+        $settings[$option_name] = GddysecOption::getOption($option);
+    }
 
-    if ($ignored_files) {
-        $tpl = 'settings-general-corefiles-cache';
-        $params['CoreFiles.TableVisibility'] = 'visible';
+    $params['Export'] = @json_encode($settings);
 
-        foreach ($ignored_files as $hash => $data) {
-            $params['CoreFiles.IgnoredFiles'] .= GddysecTemplate::getSnippet($tpl, array(
-                'IgnoredFile.CssClass' => ($counter % 2 === 0) ? '' : 'alternate',
-                'IgnoredFile.UniqueId' => substr($hash, 0, 8),
-                'IgnoredFile.FilePath' => $data->file_path,
-                'IgnoredFile.StatusType' => $data->file_status,
-                'IgnoredFile.IgnoredAt' => Gddysec::datetime($data->ignored_at),
-            ));
-            $counter++;
+    return GddysecTemplate::getSection('settings-general-importexport', $params);
+}
+
+/**
+ * Renders a page with the option to configure the timezone.
+ *
+ * @param bool $nonce True if the CSRF protection worked.
+ * @return string Page to configure the timezone.
+ */
+function gddysec_settings_general_timezone($nonce)
+{
+    $params = array();
+    $current = time();
+    $options = array();
+    $offsets = array(
+        -12.0, -11.5, -11.0, -10.5, -10.0, -9.50, -9.00, -8.50, -8.00, -7.50,
+        -7.00, -6.50, -6.00, -5.50, -5.00, -4.50, -4.00, -3.50, -3.00, -2.50,
+        -2.00, -1.50, -1.00, -0.50, +0.00, +0.50, +1.00, +1.50, +2.00, +2.50,
+        +3.00, +3.50, +4.00, +4.50, +5.00, +5.50, +5.75, +6.00, +6.50, +7.00,
+        +7.50, +8.00, +8.50, +8.75, +9.00, +9.50, 10.00, 10.50, 11.00, 11.50,
+        12.00, 12.75, 13.00, 13.75, 14.00
+    );
+
+    foreach ($offsets as $hour) {
+        $sign = ($hour < 0) ? '-' : '+';
+        $fill = (abs($hour) < 10) ? '0' : '';
+        $keyname = sprintf('UTC%s%s%.2f', $sign, $fill, abs($hour));
+        $label = date('d M, Y H:i:s', $current + ($hour * 3600));
+        $options[$keyname] = $label;
+    }
+
+    if ($nonce) {
+        $pattern = 'UTC[\-\+][0-9]{2}\.[0-9]{2}';
+        $timezone = GddysecRequest::post(':timezone', $pattern);
+
+        if ($timezone) {
+            $message = 'Timezone override will use ' . $timezone;
+
+            GddysecOption::updateOption(':timezone', $timezone);
+            GddysecEvent::reportInfoEvent($message);
+            GddysecEvent::notifyEvent('plugin_change', $message);
+            GddysecInterface::info('The timezone for the date and time in the audit logs has been changed');
         }
     }
 
-    return GddysecTemplate::getSection('settings-general-corefiles-cache', $params);
+    $val = GddysecOption::getOption(':timezone');
+    $params['Timezone.Dropdown'] = GddysecTemplate::selectOptions($options, $val);
+    $params['Timezone.Example'] = Gddysec::datetime();
+
+    return GddysecTemplate::getSection('settings-general-timezone', $params);
 }

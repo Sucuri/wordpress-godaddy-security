@@ -1,27 +1,29 @@
-/**
- * Plugin Name: GoDaddy Security
- * Plugin URI:  https://www.godaddy.com/
- * Author:      Sucuri Inc. <dcid@sucuri.net>
- * Author URI:  https://sucuri.net/
- */
-
-.gddysec-wrap *,
-.gddysec-wrap:after,
-.gddysec-wrap:before {
-    -moz-box-sizing: border-box;
+body.toplevel_page_gddysec,
+body.godaddy-security_page_gddysec_settings,
+body.godaddy-security_page_gddysec_firewall,
+body.godaddy-security_page_gddysec_hardening {
+    background: #fff;
+}
+.gddysec-container {
+    margin: 0;
+    margin-left: 9px;
+    margin-right: 28px;
+    margin-top: 10px;
+}
+.gddysec-container *,
+.gddysec-container::after,
+.gddysec-container::before {
     -webkit-box-sizing: border-box;
+    -moz-box-sizing: border-box;
     box-sizing: border-box;
 }
-.gddysec-clearfix:after,
-.gddysec-clearfix:before {
+.gddysec-clearfix::after,
+.gddysec-clearfix::before {
     content: ' ';
     display: table;
 }
-.gddysec-clearfix:after {
+.gddysec-clearfix::after {
     clear: both;
-}
-.gddysec-hidden {
-    display: none !important;
 }
 .gddysec-pull-left {
     float: left;
@@ -29,238 +31,210 @@
 .gddysec-pull-right {
     float: right;
 }
+.gddysec-hidden {
+    display: none !important;
+}
 .gddysec-monospace {
-    font-family: Menlo, Monaco, monospace, courier;
+    font-family: Menlo, Monaco, monospace, serif;
 }
-.gddysec-boxshadow {
-    background: #fff;
-    box-shadow: 3px 4px 0 #ddd;
-    margin-top: 30px;
-    padding: 20px;
+.gddysec-wraptext {
+    word-break: break-all;
 }
-.gddysec-header {
-    margin-top: 0;
-}
-.gddysec-header .gddysec-logo {
-    position: relative;
-    text-decoration: none;
-}
-.gddysec-header .gddysec-logo img {
-    margin-top: -10px;
-    width: 160px;
-}
-.gddysec-header .gddysec-logo span {
-    color: #00a63f;
-    font-size: 28px;
-    font-weight: 800;
-    left: 165px;
-    position: absolute;
-    top: 7px;
-}
-.wp-core-ui .gddysec-wrap .button-primary,
-.wp-core-ui .gddysec-wrap .button-secondary {
-    border: none;
-    box-shadow: none;
-    font-weight: bold;
-    height: auto;
+.gddysec-container select {
+    margin: 0;
+    padding: 0;
+    height: 30px;
     line-height: normal;
-    padding: 10px 28px;
 }
-.wp-core-ui .gddysec-wrap .button-primary {
-    background: #00a63f;
-    color: #fff;
+.gddysec-container input[type=text] {
+    margin: 0;
+    padding: 0 7px;
+    line-height: 28px;
 }
-.wp-core-ui .gddysec-wrap .button-secondary {
-    background: #fff;
-    border: 3px solid #00a63f;
-    color: #00a63f;
-    padding: 7px 24px;
+.gddysec-container fieldset {
+    margin-bottom: 10px;
 }
-.wp-core-ui .gddysec-wrap .button-primary {
-    text-shadow: none;
+.gddysec-container fieldset:last-child {
+    margin-bottom: 0;
 }
-.wp-core-ui .gddysec-wrap .button.button-primary.button-hero {
-    -webkit-box-shadow: 0 1px 0 #006d29;
-    box-shadow: 0 1px 0 #006d29;
-}
-.gddysec-panel-left {
-    padding-right: 30px;
-    width: 29%;
-}
-.gddysec-panel-center {
-    padding-right: 30px;
-    width: 27%;
-}
-.gddysec-panel-right {
-    width: 44%;
-}
-.gddysec-panel-left .gddysec-boxshadow,
-.gddysec-panel-center .gddysec-boxshadow,
-.gddysec-panel-right .gddysec-boxshadow {
-    min-height: 390px;
-}
-.gddysec-label,
-.gddysec-label-danger,
-.gddysec-label-default,
-.gddysec-label-error,
-.gddysec-label-info,
-.gddysec-label-notice,
-.gddysec-label-primary,
-.gddysec-label-success,
-.gddysec-label-unknown,
-.gddysec-label-warning {
-    border-radius: .25em;
-    color: #fff;
-    display: inline;
-    font-size: 75%;
+.gddysec-container fieldset label {
+    display: inline-block;
+    text-transform: uppercase;
+    line-height: 30px;
     font-weight: 700;
-    line-height: 1;
-    padding: .2em .6em .3em;
-    text-align: center;
-    vertical-align: baseline;
-    white-space: nowrap;
 }
-.gddysec-label-default,
-.gddysec-label-unknown {
-    background: #777;
+.gddysec-container fieldset span {
+    line-height: 30px;
+    display: inline-block;
 }
-.gddysec-label-error,
-.gddysec-label-danger,
-.gddysec-label-removed {
-    background: #d9534f;
+.gddysec-container fieldset span,
+.gddysec-container fieldset label,
+.gddysec-container fieldset select,
+.gddysec-container fieldset button,
+.gddysec-container fieldset input[type=text],
+.gddysec-container fieldset input[type=checkbox],
+.wp-core-ui .gddysec-container fieldset .button,
+.wp-core-ui .gddysec-container fieldset .button-primary,
+.wp-core-ui .gddysec-container fieldset .button-secondary {
+    margin: 0;
+    float: left;
+    margin-left: 5px;
 }
-.gddysec-label-info,
-.gddysec-label-notice {
-    background: #5bc0de;
-}
-.gddysec-label-warning,
-.gddysec-label-modified {
-    background: #f0ad4e;
-}
-.gddysec-label-added,
-.gddysec-label-success {
-    background: #5cb85c;
-}
-.gddysec-label-primary {
-    background: #428bca;
-}
-.gddysec-content .gddysec-table tr > th {
-    background-color: #f1f1f1;
-    background-image: -webkit-gradient(linear, left top, left bottom, from(#f9f9f9), to(#ececec));
-    background-image: -webkit-linear-gradient(top, #f9f9f9, #ececec);
-    background-image: -moz-linear-gradient(top, #f9f9f9, #ececec);
-    background-image: -ms-linear-gradient(top, #f9f9f9, #ececec);
-    background-image: -o-linear-gradient(top, #f9f9f9, #ececec);
-    background-image: linear-gradient(top, #f9f9f9, #ececec);
-    filter: "progid: DXImageTransform.Microsoft.Gradient(startColorstr=#f9f9f9, endColorstr=#ececec)";
-    -ms-filter: "progid: DXImageTransform.Microsoft.Gradient(startColorstr=#f9f9f9, endColorstr=#ececec)";
-}
-.gddysec-content .gddysec-table {
-    margin-top: 12px;
-}
-.gddysec-content .gddysec-table tr > th {
-    border-bottom: 1px solid #e5e5e5;
-    border-top: 1px solid #e5e5e5;
-}
-.gddysec-content .gddysec-table tr:first-child th {
-    border-top: 0;
-}
-.gddysec-content .gddysec-table .check-column {
-    padding: 8px 10px;
-}
-.gddysec-content .gddysec-table .check-column {
-    padding-bottom: 0;
-}
-.gddysec-content .gddysec-table th input {
+.gddysec-container fieldset label {
     margin-left: 0;
 }
-.gddysec-content .gddysec-table tr:nth-child(even) {
-    background: #f5f5f5;
+.gddysec-container fieldset input[type=checkbox] {
+    margin-top: 7px;
+    margin-bottom: 7px;
 }
-.gddysec-content .gddysec-table #cb-select-all-1 {
+.gddysec-container .gddysec-full-textarea {
+    width: 100%;
+    min-height: 300px;
+    background: #efefef;
+    word-break: break-all;
+    padding: 20px;
     margin: 0;
 }
-.gddysec-table-double-title tr:first-child th,
-.gddysec-table-quad-title tr:first-child th,
-.gddysec-table-quad-title tr:first-child+tr th,
-.gddysec-table-quad-title tr:first-child+tr+tr th,
-.gddysec-table-triple-title tr:first-child th,
-.gddysec-table-triple-title tr:first-child+tr th {
-    border-bottom: 0;
+.gddysec-header {
+    margin-top: 4px;
 }
-.gddysec-table-description {
-    border-left-width: 1px !important;
+.gddysec-header .gddysec-logo {
+    display: inline-block;
+    height: 33px;
+    margin-left: 10px;
+    margin-right: 8px;
+    text-decoration: none;
+}
+.gddysec-header .gddysec-subtitle {
+    color: #727376;
+    font-size: 30px;
+    font-weight: 200;
+}
+.gddysec-header .gddysec-version {
+    color: #727376;
+    font-size: 11px;
+    margin-left: 0;
+}
+.gddysec-header .gddysec-navbar ul {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+.gddysec-header .gddysec-navbar li {
+    float: left;
+    margin-bottom: 0;
+    margin-left: 5px;
+}
+.gddysec-container .button {
+    -moz-box-shadow: none;
+    -webkit-box-shadow: none;
+    background: none;
+    border-color: transparent;
+    height: auto;
+    line-height: normal;
+    border-radius: 3px;
     box-shadow: none;
+    text-shadow: none;
+    padding: 6px 20px;
 }
-.gddysec-table-description .inside {
-    border-bottom: 0 !important;
+.gddysec-container .button-primary {
+    background: #00a63f;
+    border-color: #00a63f;
+    color: #fff;
 }
-.gddysec-content .postbox {
-    margin: 0;
-    padding: 10px;
+.gddysec-container .button-secondary {
+    background: transparent;
+    border-color: #00a63f;
+    color: #00a63f;
 }
-.gddysec-content .postbox h3 {
-    border-bottom: 1px solid #e5e5e5;
-    margin: 0;
-    margin-bottom: 10px;
-    padding-bottom: 10px;
-    text-transform: uppercase;
+.wp-core-ui .gddysec-container .button-primary:focus,
+.wp-core-ui .gddysec-container .button-primary:hover,
+.wp-core-ui .gddysec-container .button-primary:active,
+.wp-core-ui .gddysec-container .button-primary:visited,
+.wp-core-ui .gddysec-container .button-primary:disabled,
+.wp-core-ui .gddysec-container .button-primary[disabled] {
+    color: #fff;
+    background: #00a63f;
+    border-color: #00a63f;
+    text-shadow: none !important;
+    box-shadow: none !important;
 }
-.gddysec-content .postbox .inside {
-    margin: 0;
-    padding: 0;
+.wp-core-ui .gddysec-container .button-primary:disabled,
+.wp-core-ui .gddysec-container .button-primary[disabled] {
+    color: #a0a5aa !important;
+    border-color: #ddd !important;
+    background: #f7f7f7 !important;
 }
-.gddysec-content .postbox .inside > p {
-    margin: 0;
-    padding: 0;
-    padding-bottom: 10px;
+.gddysec-container .gddysec-register-site-button {
+    background: #65666a;
+    border-color: #65666a;
 }
-.gddysec-content .postbox .inside > p:last-child {
-    padding-bottom: 0;
+.wp-core-ui .gddysec-container .gddysec-register-site-button:focus,
+.wp-core-ui .gddysec-container .gddysec-register-site-button:hover,
+.wp-core-ui .gddysec-container .gddysec-register-site-button:active {
+    background: #5e5f62;
+    border-color: #5e5f62;
+}
+.gddysec-container .gddysec-register-site-modal fieldset label {
+    min-width: 160px;
+}
+.gddysec-content {
+    /* plugin content */
 }
 .gddysec-footer {
+    color: #555d66;
+    font-size: 11px;
+    text-align: center;
     margin-top: 30px;
 }
-.gddysec-footer a,
-.gddysec-footer h2 {
-    color: #fff;
-}
-.gddysec-footer .gddysec-support {
-    background: #00a63f;
-    border: 1px solid #006d29;
-    border-bottom: 0;
-    padding: 30px;
-    text-align: center;
-}
-.gddysec-footer .gddysec-support h2 {
-    color: #fff;
-    font-size: 20px;
-    font-weight: bold;
-    margin: 0;
-}
-.gddysec-footer .gddysec-links {
-    background: #333;
-    border: 1px solid #000;
-    color: #fff;
-    padding: 30px;
-}
-.gddysec-footer .gddysec-links-inside {
-    display: table;
-    margin: 0 auto;
-}
-.gddysec-footer .gddysec-links-list {
-    margin-right: 100px;
-}
-.gddysec-footer .gddysec-links-list:last-child {
-    margin-right: 0;
-}
-.gddysec-footer .gddysec-copyright {
+.gddysec-panel {
     background: #fff;
-    border: 1px solid #ddd;
-    border-top: 0;
-    font-size: 10px;
+    border-radius: 10px;
+    box-shadow: 0 0 8px #dedede;
+    border: 1px solid #dedede;
+    margin-top: 30px;
     padding: 30px;
-    text-align: center;
+}
+.gddysec-panel .gddysec-title {
+    font-size: 30px;
+    font-weight: 800;
+    letter-spacing: 0.1px;
+    margin: 0;
+    margin-bottom: 24px;
+}
+.gddysec-panel p {
+    margin: 0;
+    margin-bottom: 10px;
+}
+.gddysec-panel p:last-child {
+    margin-bottom: 0;
+}
+.gddysec-panel hr {
+    margin: 20px 0;
+}
+.gddysec-tooltip {
+    position: relative;
+}
+.gddysec-tooltip-object {
+    width: 300px;
+    position: absolute;
+    background: rgba(0, 0, 0, 0.9);
+    line-height: normal;
+    border-radius: 3px;
+    padding: 20px;
+    font-size: 12px;
+    color: #fff;
+    z-index: 10;
+}
+.gddysec-tooltip-object::before {
+    left: 50%;
+    content: ' ';
+    position: absolute;
+    border: 10px solid transparent;
+    border-top-color: rgba(0, 0, 0, 0.9);
+    border-bottom: none;
+    margin-left: -10px;
+    bottom: -10px;
 }
 .gddysec-overlay {
     background: #666;
@@ -292,25 +266,20 @@
 .gddysec-modal-header {
     padding-bottom: 0;
 }
+.gddysec-modal-inside {
+    padding-top: 10px;
+}
 .gddysec-modal-inside p {
     margin-top: 0;
 }
 .gddysec-modal-header .gddysec-modal-title {
     border-bottom: 0;
-    float: left;
-    font-size: 24px;
+    font-size: 30px;
     line-height: 44px;
     margin: 0;
     padding: 0;
-}
-.gddysec-modal-header .gddysec-modal-logo {
-    border-right: 1px solid #000;
-    float: left;
-    margin-right: 20px;
-    padding-right: 25px;
-}
-.gddysec-modal-header .gddysec-modal-logo img {
-    height: 40px;
+    font-weight: 800;
+    letter-spacing: 0.1px;
 }
 .gddysec-modal-header .gddysec-modal-close {
     background: #00a63f;
@@ -326,257 +295,39 @@
     text-decoration: none;
     top: -21px;
 }
-.gddysec-alert {
-    margin: 0 0 10px;
-    position: relative;
-}
-.gddysec-alert > .close {
-    color: #fff;
-    font-size: 18px;
-    font-weight: 700;
-    position: absolute;
-    right: 10px;
-    text-decoration: none;
-    top: 10px;
-}
-.gddysec-alert.info,
-.gddysec-alert.error,
-.gddysec-alert.warning,
-.gddysec-alert.success,
-.gddysec-alert.updated,
-.gddysec-inline-alert,
-.gddysec-inline-alert-info,
-.gddysec-inline-alert-error,
-.gddysec-inline-alert-warning,
-.gddysec-inline-alert-success {
-    background: #ddd;
-    border: 0;
-    box-shadow: none;
-    color: #fff;
-    padding: 0;
-}
-.gddysec-alert.info,
-.gddysec-inline-alert-info {
-    background: #0684e1;
-}
-.gddysec-alert.error,
-.gddysec-inline-alert-error {
-    background: #d40415;
-}
-.gddysec-alert.success,
-.gddysec-alert.updated,
-.gddysec-inline-alert-success {
-    background: #00a63f;
-}
-.gddysec-alert.warning,
-.gddysec-inline-alert-warning {
-    background: #d9c01b;
-}
-.gddysec-alert.info,
-.gddysec-alert.error,
-.gddysec-alert.success,
-.gddysec-alert.updated,
-.gddysec-alert.warning,
-.gddysec-inline-alert,
-.gddysec-inline-alert-info,
-.gddysec-inline-alert-error,
-.gddysec-inline-alert-success,
-.gddysec-inline-alert-updated,
-.gddysec-inline-alert-warning {
-    margin-bottom: 10px;
-}
-.gddysec-alert.info:last-child,
-.gddysec-alert.error:last-child,
-.gddysec-alert.success:last-child,
-.gddysec-alert.updated:last-child,
-.gddysec-alert.warning:last-child,
-.gddysec-inline-alert:last-child,
-.gddysec-inline-alert-info:last-child,
-.gddysec-inline-alert-error:last-child,
-.gddysec-inline-alert-success:last-child,
-.gddysec-inline-alert-updated:last-child,
-.gddysec-inline-alert-warning:last-child {
-    margin-bottom: 0;
-}
-.gddysec-alert.info a,
-.gddysec-alert.error a,
-.gddysec-alert.success a,
-.gddysec-alert.updated a,
-.gddysec-alert.warning a,
-.gddysec-inline-alert a,
-.gddysec-inline-alert-info a,
-.gddysec-inline-alert-error a,
-.gddysec-inline-alert-success a,
-.gddysec-inline-alert-updated a,
-.gddysec-inline-alert-warning a {
-    color: #fff;
-    text-decoration: none;
-}
-.gddysec-alert.info p,
-.gddysec-alert.error p,
-.gddysec-alert.success p,
-.gddysec-alert.updated p,
-.gddysec-alert.warning p,
-.gddysec-inline-alert p,
-.gddysec-inline-alert-info p,
-.gddysec-inline-alert-error p,
-.gddysec-inline-alert-success p,
-.gddysec-inline-alert-warning p {
-    margin: 0;
-    padding: 10px;
-    padding-bottom: 0;
-}
-.gddysec-alert.info p:last-child,
-.gddysec-alert.error p:last-child,
-.gddysec-alert.success p:last-child,
-.gddysec-alert.updated p:last-child,
-.gddysec-alert.warning p:last-child,
-.gddysec-inline-alert p:last-child,
-.gddysec-inline-alert-info p:last-child,
-.gddysec-inline-alert-error p:last-child,
-.gddysec-inline-alert-success p:last-child,
-.gddysec-inline-alert-warning p:last-child {
-    padding-bottom: 10px;
-}
-.gddysec-hstatus {
-    background-color: #dff0d8;
-    border: 1px solid #d6e9c6;
-    color: #3c763d;
-    margin: 0;
-    padding: 14px 12px;
-    position: relative;
-}
-.gddysec-hstatus form {
-    position: absolute;
-    right: 5px;
-    top: 5px;
-}
-.gddysec-form-field label {
-    display: inline-block;
-    font-weight: bold;
-}
-.gddysec-input-group {
-    display: inline-block;
-}
-.gddysec-input-group label {
-    float: left;
-    font-weight: bold;
-    line-height: 36px;
-    text-transform: uppercase;
-}
-.gddysec-input-group select,
-.gddysec-input-group input[type=text] {
-    margin: 0;
-    padding: 8px;
-    padding-bottom: 9px;
-}
-.gddysec-input-group select {
-    height: 36px;
-    line-height: normal;
-}
-.gddysec-input-group select,
-.gddysec-input-group input[type=text],
-.wp-core-ui .gddysec-input-group .button-primary {
-    float: left;
-    margin-left: 10px;
-}
-.gddysec-setup-form-details {
-    padding-bottom: 5px;
-    padding-top: 10px;
-}
-.gddysec-setup-form .gddysec-form-field {
-    margin-bottom: 10px;
-}
-.gddysec-setup-form .gddysec-form-field label {
-    min-width: 120px;
-    text-transform: uppercase;
-}
-.gddysec-auditlogs .gddysec-table {
-    border: 0;
-    box-shadow: none;
+.gddysec-tabs {
     margin-top: 30px;
 }
-.gddysec-auditlogs .gddysec-table tfoot td {
-    border-top: 0;
+.gddysec-tabs .gddysec-tabs-buttons {
+    margin: 0;
+    padding: 0;
+    border-bottom: 1px solid #ccc;
 }
-.gddysec-auditlogs .gddysec-label {
-    border-radius: 50%;
-    cursor: pointer;
-    display: inline-block;
-    line-height: 13px;
-    text-transform: uppercase;
-    width: 18px;
-}
-.gddysec-auditlogs .gddysec-auditlogs-title,
-.gddysec-auditlogs .gddysec-auditlogs-count {
-    font-size: 17px;
-    font-weight: 900;
-}
-.gddysec-auditlogs .gddysec-auditlogs-count {
-    margin-left: 10px;
-}
-.gddysec-flag-bar {
-    fill: #fff !important;
-}
-.gddysec-flag-icon-green path,
-.gddysec-auditlog-success path,
-.gddysec-corefiles-added path {
-    fill: #00a63f;
-}
-.gddysec-flag-icon-red path,
-.gddysec-auditlog-error path,
-.gddysec-corefiles-removed path {
-    fill: #f23924;
-}
-.gddysec-flag-icon-purple path,
-.gddysec-auditlog-debug path,
-.gddysec-corefiles-modified path {
-    fill: #b406dc;
-}
-.gddysec-flag-icon-orange path,
-.gddysec-auditlog-warning path {
-    fill: #f2812e;
-}
-.gddysec-flag-icon-blue path,
-.gddysec-auditlog-info path {
-    fill: #4664c5;
-}
-.gddysec-flag-icon-white path,
-.gddysec-auditlog-notice path {
-    fill: #f3f3f3;
-}
-.gddysec-flag-icon-black path,
-.gddysec-auditlog-critical path {
-    fill: #000;
-}
-.gddysec-tabs > ul {
-    border-bottom: 1px solid #23282e;
+.gddysec-tabs .gddysec-tabs-buttons li {
+    float: left;
     margin: 0;
 }
-.gddysec-tabs > ul li {
-    margin-bottom: 0;
+.gddysec-tabs .gddysec-tabs-buttons li:first-child {
+    margin-left: 12px;
 }
-.gddysec-tabs > ul li,
-.gddysec-tabs > ul li a {
-    float: left;
+.gddysec-tabs .gddysec-tabs-buttons li:last-child a {
+    border-right: 1px solid #bebebe;
 }
-.gddysec-tabs > ul li a {
+.gddysec-tabs .gddysec-tabs-buttons a {
     background: #f3f3f3;
     border-bottom: 0;
     border-left: 1px solid #bebebe;
     border-right: 0;
     border-top: 1px solid #bebebe;
     color: #747474;
+    display: inline-block;
     font-size: 14px;
     font-weight: 900;
     line-height: 48px;
     padding: 0 20px;
     text-decoration: none;
 }
-.gddysec-tabs > ul li:last-child > a {
-    border-right: 1px solid #bebebe;
-}
-.gddysec-tabs > ul li .gddysec-tab-active {
+.gddysec-tabs .gddysec-tabs-buttons .gddysec-tab-active {
     background: #fff;
     border-bottom: 0;
     border-left: 1px solid #23282e;
@@ -585,69 +336,339 @@
     color: #000;
     line-height: 45px;
 }
-.gddysec-integrity {
-    padding: 30px;
+.gddysec-tabs .gddysec-tabs-buttons a:hover {
+    background: #fff;
 }
-.gddysec-integrity .gddysec-pull-left,
-.gddysec-integrity .gddysec-pull-right {
-    width: 50%;
-}
-.gddysec-integrity .gddysec-integrity-title {
-    font-size: 30px;
-    font-weight: 900;
-    letter-spacing: -2px;
+.gddysec-pagination {
+    border-radius: 4px;
+    display: inline-block;
     margin: 0;
-    margin-bottom: 20px;
     padding: 0;
-    text-transform: uppercase;
 }
-.gddysec-integrity .gddysec-integrity-subtitle {
-    border-bottom: 1px solid #ddd;
-    font-size: 22px;
-    font-weight: 900;
-    letter-spacing: -1px;
+.gddysec-pagination > li {
+    display: inline;
+}
+.gddysec-pagination > li > a,
+.gddysec-pagination > li > span {
+    background: #fff;
+    border: 1px solid #ddd;
+    color: #428bca;
+    float: left;
+    line-height: 1.42857143;
+    margin-left: -1px;
+    padding: 6px 12px;
+    position: relative;
+    text-decoration: none;
+}
+.gddysec-pagination > li:first-child > a,
+.gddysec-pagination > li:first-child > span {
+    border-radius: 4px 0 0 4px;
+    margin-left: 0;
+}
+.gddysec-pagination > li:last-child > a,
+.gddysec-pagination > li:last-child > span {
+    border-radius: 0 4px 4px 0;
+}
+.gddysec-pagination > li > a.gddysec-pagination-active,
+.gddysec-pagination > li > a:hover {
+    background: #0074a2;
+    color: #fff;
+}
+.wrap div.gddysec-alert {
     margin: 0;
-    margin-bottom: 20px;
+    position: relative;
+}
+.wrap .gddysec-alert > .close {
+    color: #fff;
+    font-size: 18px;
+    font-weight: 700;
+    position: absolute;
+    text-decoration: none;
+    right: 20px;
+    top: 20px;
+}
+.wrap .gddysec-alert.info,
+.wrap .gddysec-alert.error,
+.wrap .gddysec-alert.success,
+.wrap .gddysec-alert.updated,
+.gddysec-inline-alert,
+.gddysec-inline-alert-info,
+.gddysec-inline-alert-error,
+.gddysec-inline-alert-success {
+    background: #ddd;
+    border: 0;
+    box-shadow: none;
+    color: #fff;
     padding: 0;
+}
+.wrap .gddysec-alert.info,
+.gddysec-inline-alert-info {
+    background: #0684e1;
+}
+.wrap .gddysec-alert.error,
+.gddysec-inline-alert-error {
+    background: #dd3d36;
+}
+.wrap .gddysec-alert.success,
+.wrap .gddysec-alert.updated,
+.gddysec-inline-alert-success {
+    background: #00a63f;
+}
+.wrap .gddysec-alert.info,
+.wrap .gddysec-alert.error,
+.wrap .gddysec-alert.success,
+.wrap .gddysec-alert.updated,
+.gddysec-inline-alert,
+.gddysec-inline-alert-info,
+.gddysec-inline-alert-error,
+.gddysec-inline-alert-success,
+.gddysec-inline-alert-updated {
+    margin-bottom: 20px;
+}
+.wrap .gddysec-alert.info:last-child,
+.wrap .gddysec-alert.error:last-child,
+.wrap .gddysec-alert.success:last-child,
+.wrap .gddysec-alert.updated:last-child,
+.gddysec-inline-alert:last-child,
+.gddysec-inline-alert-info:last-child,
+.gddysec-inline-alert-error:last-child,
+.gddysec-inline-alert-success:last-child,
+.gddysec-inline-alert-updated:last-child {
+    margin-bottom: 0;
+}
+.wrap .gddysec-alert.info a,
+.wrap .gddysec-alert.error a,
+.wrap .gddysec-alert.success a,
+.wrap .gddysec-alert.updated a,
+.gddysec-inline-alert a,
+.gddysec-inline-alert-info a,
+.gddysec-inline-alert-error a,
+.gddysec-inline-alert-success a,
+.gddysec-inline-alert-updated a {
+    color: #fff;
+    text-decoration: none;
+}
+.wrap .gddysec-alert.info p,
+.wrap .gddysec-alert.error p,
+.wrap .gddysec-alert.success p,
+.wrap .gddysec-alert.updated p,
+.gddysec-inline-alert p,
+.gddysec-inline-alert-info p,
+.gddysec-inline-alert-error p,
+.gddysec-inline-alert-success p {
+    margin: 0;
+    color: #fff;
+    padding: 20px;
+    padding-bottom: 0;
+}
+.wrap .gddysec-alert.info p a,
+.wrap .gddysec-alert.error p a,
+.wrap .gddysec-alert.success p a,
+.wrap .gddysec-alert.updated p a,
+.gddysec-inline-alert p a,
+.gddysec-inline-alert-info p a,
+.gddysec-inline-alert-error p a,
+.gddysec-inline-alert-success p a {
+    text-decoration: underline;
+}
+.wrap .gddysec-alert.info p:last-child,
+.wrap .gddysec-alert.error p:last-child,
+.wrap .gddysec-alert.success p:last-child,
+.wrap .gddysec-alert.updated p:last-child,
+.gddysec-inline-alert p:last-child,
+.gddysec-inline-alert-info p:last-child,
+.gddysec-inline-alert-error p:last-child,
+.gddysec-inline-alert-success p:last-child {
     padding-bottom: 20px;
 }
-.gddysec-integrity-correct .gddysec-integrity-subtitle {
-    color: #00a63f;
-}
-.gddysec-integrity-incorrect .gddysec-integrity-subtitle {
-    color: #f23924;
-}
-.gddysec-integrity .gddysec-integrity-header {
-    margin-bottom: 30px;
-}
-.gddysec-integrity .gddysec-integrity-header p {
+.gddysec-hstatus {
     margin: 0;
-    padding: 0;
+    padding: 20px;
+    position: relative;
+    border: 1px solid transparent;
+    margin-bottom: 20px;
 }
-.gddysec-integrity .gddysec-column-left,
-.gddysec-integrity .gddysec-column-center,
-.gddysec-integrity .gddysec-column-right {
-    float: left;
+.gddysec-hstatus:last-child {
+    margin-bottom: 0;
 }
-.gddysec-integrity .gddysec-column-left {
-    width: 50%;
+.gddysec-hstatus-0 {
+    background-color: #f2dede;
+    border-color: #ebccd1;
+    color: #a94442;
 }
-.gddysec-integrity .gddysec-column-center {
-    padding: 24px 0;
-    text-align: center;
-    width: 10%;
+.gddysec-hstatus-0 .button-primary {
+    background: #9b2b27;
+    border-color: #9b2b27;
 }
-.gddysec-integrity .gddysec-column-right {
-    width: 40%;
+.wp-core-ui .gddysec-hstatus-0 .button-primary:focus,
+.wp-core-ui .gddysec-hstatus-0 .button-primary:hover,
+.wp-core-ui .gddysec-hstatus-0 .button-primary:active,
+.wp-core-ui .gddysec-hstatus-0 .button-primary:disabled,
+.wp-core-ui .gddysec-hstatus-0 .button-primary[disabled] {
+    background: #872522;
+    border-color: #872522;
 }
-.gddysec-integrity .gddysec-corefiles {
-    margin-bottom: 30px;
+.gddysec-hstatus-1 {
+    background-color: #dff0d8;
+    border-color: #d6e9c6;
+    color: #3c763d;
+}
+.gddysec-hstatus-2 {
+    background-color: #dee4f2;
+    border-color: #ccd0eb;
+    color: #4263a9;
+}
+.gddysec-hstatus-2 .button-primary {
+    background: #44709b;
+    border-color: #44709b;
+}
+.wp-core-ui .gddysec-hstatus-2 .button-primary:focus,
+.wp-core-ui .gddysec-hstatus-2 .button-primary:hover,
+.wp-core-ui .gddysec-hstatus-2 .button-primary:active,
+.wp-core-ui .gddysec-hstatus-2 .button-primary:disabled,
+.wp-core-ui .gddysec-hstatus-2 .button-primary[disabled] {
+    background: #3f6890;
+    border-color: #3f6890;
+}
+.gddysec-hstatus form {
+    position: absolute;
+    right: 20px;
+    top: 14px;
+}
+.gddysec-flag-bar {
+    fill: #fff !important;
+}
+.gddysec-flag-icon-green path,
+.gddysec-auditlog-success path,
+.gddysec-integrity-added path {
+    fill: #00a63f;
+}
+.gddysec-flag-icon-red path,
+.gddysec-auditlog-error path,
+.gddysec-integrity-removed path {
+    fill: #f23924;
+}
+.gddysec-flag-icon-purple path,
+.gddysec-auditlog-debug path,
+.gddysec-integrity-modified path {
+    fill: #b406dc;
+}
+.gddysec-flag-icon-orange path,
+.gddysec-auditlog-warning path {
+    fill: #f2812e;
+}
+.gddysec-flag-icon-blue path,
+.gddysec-auditlog-notice path {
+    fill: #4664c5;
+}
+.gddysec-flag-icon-white path,
+.gddysec-auditlog-info path {
+    fill: #f3f3f3;
+}
+.gddysec-flag-icon-black path,
+.gddysec-auditlog-critical path {
+    fill: #000;
+}
+.gddysec-container .gddysec-table {
+    margin-bottom: 20px;
+}
+.gddysec-container .gddysec-table:last-child {
+    margin-bottom: 0;
+}
+.gddysec-container .gddysec-table tbody tr:nth-child(odd) {
+    background: #f5f5f5;
+}
+.gddysec-dashboard-left {
+    width: 68%;
+    padding-right: 25px;
+}
+.gddysec-dashboard-right {
+    width: 32%;
+}
+.gddysec-dashboard-left .gddysec-tabs {
     margin-top: 0;
 }
+.gddysec-dashboard-left .gddysec-tabs-containers {
+    margin-top: 30px;
+}
+.gddysec-integrity .gddysec-integrity-left,
+.gddysec-integrity .gddysec-integrity-right {
+    width: 50%;
+}
+.gddysec-integrity .gddysec-integrity-right {
+    padding-left: 110px;
+}
+.gddysec-integrity .gddysec-subtitle {
+    margin: 0;
+    border-bottom: 1px solid #ddd;
+    font-weight: 800;
+    margin-bottom: 12px;
+    padding-bottom: 11px;
+}
+.gddysec-integrity hr {
+    margin: 20px 0;
+}
+.gddysec-integrity-correct .gddysec-integrity-right {
+    background: url('../images/checkmark.png') no-repeat 25px 30px;
+}
+.gddysec-integrity-incorrect .gddysec-integrity-right {
+    background: url('../images/checkcross.png') no-repeat 25px 30px;
+}
+.gddysec-integrity-loading .gddysec-integrity-missing {
+    height: 147px;
+    background: #f8f8f8;
+    border: 3px dotted #ddd;
+    border-radius: 14px;
+}
+.gddysec-integrity-correct .gddysec-subtitle {
+    color: #00a63f;
+}
+.gddysec-integrity-incorrect .gddysec-subtitle {
+    color: #f33924;
+}
+.gddysec-integrity-incorrect .gddysec-table .gddysec-tooltip {
+    left: 5px;
+    position: relative;
+    top: 3px;
+}
+.gddysec-container .gddysec-integrity-diff-utility {
+    margin-bottom: 20px;
+}
+.gddysec-diff-utility-modal .gddysec-modal-inside p {
+    margin-bottom: 20px;
+}
+.gddysec-container .gddysec-diff-content {
+    background: #003140;
+    font-family: Menlo, Monaco, monospace, serif;
+    border: 1px solid #32636c;
+    border-radius: 4px;
+    font-size: 12px;
+    padding: 20px 0;
+    margin: 0;
+}
+.gddysec-container .gddysec-diff-line {
+    color: #fff;
+    white-space: pre-wrap;
+    padding: 0 20px;
+    margin: 0;
+}
+.gddysec-container .gddysec-diff-header {
+    color: #999;
+}
+.gddysec-container .gddysec-diff-minus {
+    color: #ff304b;
+}
+.gddysec-container .gddysec-diff-plus {
+    color: #83e600;
+}
 .gddysec-sitecheck-details {
-    padding: 20px 30px;
+    margin-top: 20px;
+    margin-bottom: 20px;
+    padding-top: 20px;
     padding-bottom: 0;
     position: relative;
+    border-top: 1px solid #dedede;
+    border-bottom: 1px solid #dedede;
 }
 .gddysec-sitecheck-details ul {
     margin: 0;
@@ -655,6 +676,7 @@
 .gddysec-sitecheck-details li {
     display: inline-block;
     margin-bottom: 20px;
+    margin-right: 20px;
 }
 .gddysec-sitecheck-details .gddysec-details-title {
     display: block;
@@ -665,7 +687,6 @@
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-    width: 150px;
 }
 .gddysec-sitecheck-details .gddysec-pull-left {
     width: 80%;
@@ -673,49 +694,27 @@
 .gddysec-sitecheck-details .gddysec-pull-right {
     width: 20%;
 }
-.gddysec-sitecheck-showmore {
-    line-height: 76px;
-    position: absolute;
-    right: 30px;
-    top: 0;
-}
-.gddysec-showmore-text {
-    color: #000;
-    display: inline-block;
-    font-size: 14px;
-    font-weight: bold;
-    line-height: 36px;
-    text-decoration: none;
-}
-.gddysec-showmore-arrow {
-    border: 14px solid #fff;
-    border-bottom: 0;
-    border-left-color: transparent;
-    border-right-color: transparent;
-    border-top-color: #00a63f;
-    display: inline-block;
-    margin-left: 20px;
-}
 .gddysec-sitecheck-list ul {
-    margin-top: 30px;
+    margin-top: 20px;
+    margin-bottom: 0;
 }
 .gddysec-sitecheck-list li {
-    margin-left: 8px;
     margin-top: 10px;
-    padding-left: 36px;
+    padding-left: 30px;
+    margin-bottom: 0;
 }
 .gddysec-sitecheck-list a {
     font-size: 14px;
     text-decoration: none;
 }
 .gddysec-sitecheck-list-INFO {
-    background: url('../images/checkmark-info.png') no-repeat;
+    background: url('../images/checkinfo.png') no-repeat;
 }
 .gddysec-sitecheck-list-WARN {
-    background: url('../images/checkmark-warn.png') no-repeat;
+    background: url('../images/checkwarn.png') no-repeat;
 }
 .gddysec-sitecheck-list-NOTICE {
-    background: url('../images/checkmark-notice.png') no-repeat;
+    background: url('../images/checknotice.png') no-repeat;
 }
 .gddysec-sitecheck-list-INFO a,
 .gddysec-sitecheck-list-NOTICE a {
@@ -726,11 +725,14 @@
     font-weight: bold;
 }
 .gddysec-sitecheck-footnote {
+    color: #989898;
+    padding-top: 20px;
     border-top: 1px solid #ddd;
     margin-top: 20px;
-    padding-top: 20px;
 }
+.gddysec-sitecheck-footnote a,
 .gddysec-sitecheck-footnote p {
+    font-size: 11px;
     margin: 0;
 }
 .gddysec-tag-title {
@@ -739,83 +741,173 @@
     font-size: 17px;
     font-weight: 900;
     margin: 0;
-    padding: 7px 20px 7px 8px;
+    padding: 8px 14px;
     position: relative;
+    border-radius: 4px;
 }
-.gddysec-tag-title::before {
-    background-color: transparent !important;
-    border-left: 8px solid transparent;
-    border-right: 8px solid transparent;
-    border-top-style: solid;
-    border-top-width: 8px;
-    bottom: -8px;
-    content: "";
-    height: 0;
-    left: 30px;
-    position: absolute;
-    width: 0;
-}
-.gddysec-tag-title::after {
-    background-color: #fff;
-    content: "";
-    height: 50px;
-    position: absolute;
-    right: -5px;
-    top: 0;
-    transform: rotate(10deg);
-    width: 15px;
-}
-.gddysec-tag-green,
-.gddysec-tag-green::before {
+.gddysec-tag-green {
     background-color: #00a63f;
-    border-top-color: #00a63f;
 }
-.gddysec-tag-red,
-.gddysec-tag-red::before {
+.gddysec-tag-red {
     background-color: #f23924;
-    border-top-color: #f23924;
 }
-.gddysec-tag-blue,
-.gddysec-tag-blue::before {
+.gddysec-tag-blue {
     background-color: #3922f2;
-    border-top-color: #3922f2;
 }
-#gddysec-iframes table.widefat,
-#gddysec-links table.widefat,
-#gddysec-scripts table.widefat {
-    border: 0;
-    box-shadow: none;
+.gddysec-auditlog-date {
+    color: #808080;
+    padding: 30px 0;
+    font-size: 24px;
+    font-weight: 200;
+    border-bottom: 1px solid #dbdbdb;
 }
-#gddysec-iframes .widefat td,
-#gddysec-links .widefat td,
-#gddysec-scripts .widefat td {
-    word-break: break-all;
+.gddysec-auditlog-date:first-child {
+    padding-top: 0;
 }
-.gddysec-settings {
-    margin-top: 30px;
+.gddysec-auditlog-entry {
+    padding: 10px 0;
+    border-bottom: 1px solid #dbdbdb;
 }
-.gddysec-settings h3 {
-    font-weight: 900;
-    margin: 0;
-    text-transform: uppercase;
+.gddysec-auditlog-entry-title,
+.gddysec-auditlog-entry-address,
+.gddysec-auditlog-entry-extra li {
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
 }
-.gddysec-settings .gddysec-table {
-    margin-bottom: 20px;
+.gddysec-auditlog-entry-time {
+    width: 45px;
+    color: #808080;
 }
-.gddysec-settings .gddysec-table:last-child {
+.gddysec-auditlog-entry-event {
+    width: 28px;
+}
+.gddysec-auditlog-entry-message {
+    width: 64.3111%;
+    color: #000;
+}
+.gddysec-auditlog-entry-title strong {
+    font-size: 14px;
+    font-weight: 800;
+}
+.gddysec-auditlog-entry-title span {
+    font-size: 14px;
+}
+.gddysec-auditlog-entry-extra {
+    color: #717171;
+    font-size: 11px;
+}
+.gddysec-auditlog-entry-extra ul {
+    margin-top: 5px;
+}
+.gddysec-auditlog-entry-extra li {
     margin-bottom: 0;
 }
-.gddysec-settings .gddysec-boxshadow:first-child {
-    margin-top: 0;
+.gddysec-auditlog-entry-address {
+    width: 19.4311%;
+    color: #808080;
+    text-align: right;
 }
-
-.gddysec-table .thead-with-button {
-    padding: 5px 5px 5px 10px;
+.gddysec-auditlog-table .gddysec-pagination-loading {
+    line-height: 32px;
+    margin-left: 10px;
 }
-.gddysec-table .thead-with-button > span {
+.gddysec-pagination-panel,
+.gddysec-auditlog-footer {
+    margin-top: 30px;
+}
+.gddysec-hardening-option {
+    margin-bottom: 0;
+}
+.gddysec-hardening-option .button {
+    min-width: 150px;
+}
+.gddysec-hardening-option > span {
+    font-size: 16px;
+}
+.gddysec-hardening-option .gddysec-hardening-help {
     display: inline-block;
-    line-height: 36px;
+    padding: 8px 0;
+    width: 14px;
 }
-.gddysec-content .thead-topright-action {
+.gddysec-hardening-option .gddysec-hardening-help svg {
+    float: left;
+}
+.gddysec-accesslog-datetime,
+.gddysec-accesslog-signature,
+.gddysec-accesslog-request,
+.gddysec-accesslog-useragent,
+.gddysec-accesslog-target,
+.gddysec-accesslog-referer {
+    margin-left: 24px;
+}
+.gddysec-accesslog-label {
+    font-weight: 700;
+}
+.gddysec-ipaccess-form,
+.gddysec-ipaccess-table {
+    margin-top: 20px;
+}
+.gddysec-ipaccess-table tbody td + td {
+    text-align: right;
+}
+.gddysec-ipaccess-table .gddysec-monospace {
+    line-height: 30px;
+}
+.gddysec-settings-alerts .dashicons-before::before {
+    padding-right: 10px;
+}
+#firewall-clear-cache-auto {
+    margin-bottom: 15px;
+}
+.gddysec-firewall-accesslog {
+    word-break: break-all;
+}
+.rtl .gddysec-header .gddysec-pull-left {
     float: right;
+}
+.rtl .gddysec-header .gddysec-pull-right {
+    float: left;
+}
+.rtl .gddysec-header .gddysec-navbar li {
+    float: right;
+}
+.rtl .gddysec-tabs .gddysec-tabs-buttons li {
+    float: right;
+}
+.rtl .gddysec-tabs .gddysec-tabs-buttons li:first-child {
+    margin-left: 0;
+    margin-right: 12px;
+}
+.rtl .gddysec-tabs .gddysec-tabs-buttons a {
+    border-right: 1px solid #dfdfdf;
+    border-left: 0;
+}
+.rtl .gddysec-tabs .gddysec-tabs-buttons li:first-child a {
+    border-top-right-radius: 6px;
+}
+.rtl .gddysec-tabs .gddysec-tabs-buttons li:last-child a {
+    border-left: 1px solid #ccc;
+    border-top-left-radius: 6px;
+}
+.rtl .gddysec-hstatus form {
+    left: 20px;
+    right: initial;
+}
+.rtl .gddysec-container fieldset span,
+.rtl .gddysec-container fieldset label,
+.rtl .gddysec-container fieldset select,
+.rtl .gddysec-container fieldset button,
+.rtl .gddysec-container fieldset input[type=text],
+.rtl .gddysec-container fieldset input[type=checkbox],
+.rtl .wp-core-ui .gddysec-container fieldset .button,
+.rtl .wp-core-ui .gddysec-container fieldset .button-primary,
+.rtl .wp-core-ui .gddysec-container fieldset .button-secondary {
+    float: right !important;
+    margin-left: 0;
+    margin-right: 5px;
+}
+.rtl .wrap .gddysec-alert > .close {
+    right: initial;
+    left: 20px;
 }

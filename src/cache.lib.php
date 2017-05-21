@@ -1,5 +1,19 @@
 <?php
 
+/**
+ * Code related to the cache.lib.php interface.
+ *
+ * PHP version 5
+ *
+ * @category   Library
+ * @package    GoDaddy
+ * @subpackage GoDaddySecurity
+ * @author     Daniel Cid <dcid@sucuri.net>
+ * @copyright  2017 Sucuri Inc. - GoDaddy LLC.
+ * @license    https://www.godaddy.com/ - Proprietary
+ * @link       https://wordpress.org/plugins/godaddy-security
+ */
+
 if (!defined('GDDYSEC_INIT') || GDDYSEC_INIT !== true) {
     if (!headers_sent()) {
         /* Report invalid access if possible. */
@@ -20,6 +34,14 @@ if (!defined('GDDYSEC_INIT') || GDDYSEC_INIT !== true) {
  *
  * [1] https://codex.wordpress.org/Class_Reference/WP_Object_Cache
  * [2] https://codex.wordpress.org/Class_Reference/WP_Object_Cache#Persistent_Caching
+ *
+ * @category   Library
+ * @package    GoDaddy
+ * @subpackage GoDaddySecurity
+ * @author     Daniel Cid <dcid@sucuri.net>
+ * @copyright  2017 Sucuri Inc. - GoDaddy LLC.
+ * @license    https://www.godaddy.com/ - Proprietary
+ * @link       https://wordpress.org/plugins/godaddy-security
  */
 class GddysecCache extends Gddysec
 {
@@ -32,18 +54,18 @@ class GddysecCache extends Gddysec
      * line of the file causing it to stop the execution if a unauthorized user
      * tries to access it directly.
      *
-     * [1] /public/data/sucuri-DATASTORE.php
+     * [1] /public/data/gddysec-DATASTORE.php
      *
-     * @var null|string
+     * @var string
      */
-    private $datastore = null;
+    private $datastore;
 
     /**
      * The full path of the datastore file.
      *
      * @var string
      */
-    private $datastore_path = '';
+    private $datastore_path;
 
     /**
      * Whether the datastore file is usable or not.
@@ -51,14 +73,15 @@ class GddysecCache extends Gddysec
      * This variable will only be TRUE if the datastore file specified exists, is
      * writable and readable, in any other case it will always be FALSE.
      *
-     * @var boolean
+     * @var bool
      */
-    private $usable_datastore = false;
+    private $usable_datastore;
 
     /**
-     * Class constructor.
+     * Initializes the cache library.
      *
-     * @param  string $datastore Unique name (or identifier) of the file with the data.
+     * @param  string $datastore   Name of the storage file.
+     * @param  bool   $auto_create Forces the creation of the storage file.
      * @return void
      */
     public function __construct($datastore = '', $auto_create = true)
@@ -71,9 +94,9 @@ class GddysecCache extends Gddysec
     /**
      * Default attributes for every datastore file.
      *
-     * @return string Default attributes for every datastore file.
+     * @return array Default attributes for every datastore file.
      */
-    private function datastoreDefaultInfo()
+    public function datastoreDefaultInfo()
     {
         $attrs = array(
             'datastore' => $this->datastore,
@@ -87,8 +110,8 @@ class GddysecCache extends Gddysec
     /**
      * Default content of every datastore file.
      *
-     * @param  array  $finfo Rainbow table with the key names and decoded values.
-     * @return string        Default content of every datastore file.
+     * @param  array $finfo Rainbow table with the key names and decoded values.
+     * @return string       Default content of every datastore file.
      */
     private function datastoreInfo($finfo = array())
     {
@@ -115,132 +138,132 @@ class GddysecCache extends Gddysec
 
     /**
      * Check if the datastore file exists, if it's writable and readable by the same
-     * user running the server, in case that it does not exists the function will
+     * user running the server, in case that it does not exists the method will
      * tries to create it by itself with the right permissions to use it.
      *
-     * @param  boolean $auto_create Automatically create the file if not exists or not.
-     * @return string               The full path where the datastore file is located, FALSE otherwise.
+     * @param  bool $auto_create Create the file is it does not exists.
+     * @return string|bool       Absolute path to the storage file, false otherwise.
      */
     private function datastoreFilePath($auto_create = false)
     {
-        if (!is_null($this->datastore)) {
-            $folder_path = $this->datastore_folder_path();
-            $file_path = $folder_path . '/gddysec-' . $this->datastore . '.php';
-
-            // Create the datastore parent directory.
-            if (!file_exists($folder_path)) {
-                @mkdir($folder_path, 0755, true);
-            }
-
-            // Create the datastore file is it does not exists and the folder is writable.
-            if (!file_exists($file_path)
-                && is_writable($folder_path)
-                && $auto_create === true
-            ) {
-                @file_put_contents($file_path, $this->datastoreInfo());
-            }
-
-            // Continue the operation after an attemp to create the datastore file.
-            if (file_exists($file_path)
-                && is_writable($file_path)
-                && is_readable($file_path)
-            ) {
-                return $file_path;
-            }
+        if (!$this->datastore) {
+            return false;
         }
 
-        return false;
-    }
+        $filename = $this->dataStorePath('gddysec-' . $this->datastore . '.php');
+        $directory = dirname($filename); /* create directory if necessary */
 
-    /**
-     * Define the pattern for the regular expression that will check if a cache key
-     * is valid or not, and also will help the function that parses the file to see
-     * which characters of each line are the keys are which are the values.
-     *
-     * @param  string $action Either "valid", "content", or "header".
-     * @return string Cache key pattern.
-     */
-    private function keyPattern($action = 'valid')
-    {
-        if ($action == 'valid') {
-            return '/^([0-9a-zA-Z_]+)$/';
-        } elseif ($action == 'content') {
-            return '/^([0-9a-zA-Z_]+):(.+)/';
-        } elseif ($action == 'header') {
-            return '/^\/\/ ([a-z_]+)=(.*);$/';
+        if (!file_exists($directory)) {
+            @mkdir($directory, 0755, true);
         }
 
-        return false;
+        if (!file_exists($filename) && is_writable($directory) && $auto_create) {
+            @file_put_contents($filename, $this->datastoreInfo());
+        }
+
+        return $filename;
     }
 
     /**
      * Check whether a key has a valid name or not.
      *
-     * @param  string  $key Unique name to identify the data in the datastore file.
-     * @return boolean      TRUE if the format of the key name is valid, FALSE otherwise.
+     * WARNING: Instead of using a regular expression to match the format of the
+     * key we will use a primitive string transformation technique to reduce the
+     * execution time, regular expressions are significantly slow.
+     *
+     * @param  string $key Unique name for the data.
+     * @return bool        True if the key is valid, false otherwise.
      */
     private function validKeyName($key = '')
     {
-        return (bool) @preg_match($this->keyPattern('valid'), $key);
+        $result = true;
+        $length = strlen($key);
+        $allowed = array(
+            /* preg_match('/^([0-9a-zA-Z_]+)$/', $key) */
+            '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
+            'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j',
+            'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't',
+            'u', 'v', 'w', 'x', 'y', 'z', 'A', 'B', 'C', 'D',
+            'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N',
+            'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X',
+            'Y', 'Z', '_',
+        );
+
+        for ($i = 0; $i < $length; $i++) {
+            if (!in_array($key[$i], $allowed)) {
+                $result = false;
+                break;
+            }
+        }
+
+        return $result;
     }
 
     /**
      * Update the content of the datastore file with the new entries.
      *
-     * @param  array   $finfo Rainbow table with the key names and decoded values.
-     * @return boolean        TRUE if the operation finished successfully, FALSE otherwise.
+     * @param  array $finfo Rainbow table with the key names and decoded values.
+     * @return bool         TRUE if the operation finished successfully, FALSE otherwise.
      */
     private function saveNewEntries($finfo = array())
     {
-        $data_string = $this->datastoreInfo($finfo);
+        if (!$finfo) {
+            return false;
+        }
 
-        if (!empty($finfo)) {
+        $metadata = $this->datastoreInfo($finfo);
+
+        if (@file_put_contents($this->datastore_path, $metadata)) {
             foreach ($finfo['entries'] as $key => $data) {
-                if ($this->validKeyName($key)) {
-                    $data = json_encode($data);
-                    $data_string .= sprintf("%s:%s\n", $key, $data);
-                }
+                $line = sprintf("%s:%s\n", $key, json_encode($data));
+                @file_put_contents($this->datastore_path, $line, FILE_APPEND);
             }
         }
 
-        return (bool) @file_put_contents($this->datastore_path, $data_string);
+        return true;
     }
 
     /**
-     * Retrieve and parse the datastore file, and generate a rainbow table with the
-     * key names and decoded data as the values of each entry. Duplicated key names
-     * will be removed automatically while adding the keys to the array and their
-     * values will correspond to the first occurrence found in the file.
+     * Retrieve and parse the cache file and generate a hash table with the keys
+     * and decoded data as the values of each entry. Duplicated key names will
+     * be merged automatically.
      *
-     * @param  boolean $assoc When TRUE returned objects will be converted into associative arrays.
+     * @param  bool $assoc    Force object to array conversion.
+     * @param  bool $onlyInfo Returns the cache headers and no content.
      * @return array          Rainbow table with the key names and decoded values.
      */
-    private function getDatastoreContent($assoc = false)
+    private function getDatastoreContent($assoc = false, $onlyInfo = false)
     {
-        $data_object = array(
-            'info' => array(),
-            'entries' => array(),
-        );
+        $object = array();
+        $object['info'] = array();
+        $object['entries'] = array();
+        $lines = GddysecFileInfo::fileLines($this->datastore_path);
 
-        if ($this->usable_datastore) {
-            $data_lines = GddysecFileInfo::file_lines($this->datastore_path);
+        if (is_array($lines) && !empty($lines)) {
+            foreach ($lines as $line) {
+                if (strpos($line, "//\x20") === 0
+                    && strpos($line, '=') !== false
+                    && $line[strlen($line) - 1] === ';'
+                ) {
+                    $section = substr($line, 3, strlen($line) - 4);
+                    list($header, $value) = explode('=', $section, 2);
+                    $object['info'][$header] = $value;
+                    continue;
+                }
 
-            if (!empty($data_lines)) {
-                foreach ($data_lines as $line) {
-                    if (preg_match($this->keyPattern('header'), $line, $match)) {
-                        $data_object['info'][ $match[1] ] = $match[2];
-                    } elseif (preg_match($this->keyPattern('content'), $line, $match)) {
-                        if ($this->validKeyName($match[1])
-                            && !array_key_exists($match[1], $data_object)
-                        ) {
-                            $data_object['entries'][$match[1]] = @json_decode($match[2], $assoc);
-                        }
-                    }
+                /* skip content */
+                if ($onlyInfo) {
+                    continue;
+                }
+
+                if (strpos($line, ':') !== false) {
+                    list($keyname, $value) = explode(':', $line, 2);
+                    $object['entries'][$keyname] = @json_decode($value, $assoc);
                 }
             }
         }
 
-        return $data_object;
+        return $object;
     }
 
     /**
@@ -248,31 +271,31 @@ class GddysecCache extends Gddysec
      *
      * Each datastore file has a list of attributes at the beginning of the it with
      * information like the creation and last update time. If you are extending the
-     * functionality of these headers please refer to the function that contains the
+     * functionality of these headers please refer to the method that contains the
      * default attributes and their values [1].
      *
      * [1] GddysecCache::datastoreDefaultInfo()
      *
-     * @return array Default content of every datastore file.
+     * @return array|bool Default content of every datastore file.
      */
     public function getDatastoreInfo()
     {
-        $finfo = $this->getDatastoreContent();
+        $finfo = $this->getDatastoreContent(false, true);
 
-        if (!empty($finfo['info'])) {
-            $finfo['info']['fpath'] = $this->datastore_path;
-
-            return $finfo['info'];
+        if (empty($finfo['info'])) {
+            return false;
         }
 
-        return false;
+        $finfo['info']['fpath'] = $this->datastore_path;
+
+        return $finfo['info'];
     }
 
     /**
      * Get the total number of unique entries in the datastore file.
      *
-     * @param  array   $finfo Rainbow table with the key names and decoded values.
-     * @return integer        Total number of unique entries found in the datastore file.
+     * @param  array $finfo Rainbow table with the key names and decoded values.
+     * @return int          Total number of unique entries found in the datastore file.
      */
     public function getCount($finfo = null)
     {
@@ -285,18 +308,19 @@ class GddysecCache extends Gddysec
 
     /**
      * Check whether the last update time of the datastore file has surpassed the
-     * lifetime specified for a key name. This function is the only one related with
+     * lifetime specified for a key name. This method is the only one related with
      * the caching process, any others besides this are just methods used to handle
      * the data inside those files.
      *
-     * @param  integer $lifetime Life time of the key in the datastore file.
-     * @param  array   $finfo    Rainbow table with the key names and decoded values.
-     * @return boolean           TRUE if the life time of the data has expired, FALSE otherwise.
+     * @param  int   $lifetime Life time of the key in the datastore file.
+     * @param  array $finfo    Rainbow table with the key names and decoded values.
+     * @return bool            TRUE if the life time of the data has expired, FALSE otherwise.
      */
     public function dataHasExpired($lifetime = 0, $finfo = null)
     {
-        if (is_null($finfo)) {
-            $finfo = $this->getDatastoreContent();
+        if (!is_array($finfo)) {
+            $meta = $this->getDatastoreInfo();
+            $finfo = array('info' => $meta);
         }
 
         if ($lifetime > 0 && !empty($finfo['info'])) {
@@ -311,143 +335,147 @@ class GddysecCache extends Gddysec
     }
 
     /**
-     * Execute the action using the key name and data specified.
-     *
-     * @param  string  $key      Unique name to identify the data in the datastore file.
-     * @param  string  $data     Mixed data stored in the datastore file following the unique key name.
-     * @param  string  $action   Either add, set, get, or delete.
-     * @param  integer $lifetime Life time of the key in the datastore file.
-     * @param  boolean $assoc    When TRUE returned objects will be converted into associative arrays.
-     * @return boolean           TRUE if the operation finished successfully, FALSE otherwise.
-     */
-    private function handleKeyData($key = '', $data = null, $action = '', $lifetime = 0, $assoc = false)
-    {
-        if ($this->validKeyName($key)
-            && $this->usable_datastore
-        ) {
-            $finfo = $this->getDatastoreContent($assoc);
-
-            if ($action == 'set' || $action == 'add') {
-                $finfo['entries'][$key] = $data;
-
-                return $this->saveNewEntries($finfo);
-            } elseif ($action == 'get') {
-                if (!$this->dataHasExpired($lifetime, $finfo)
-                    && array_key_exists($key, $finfo['entries'])
-                ) {
-                    return $finfo['entries'][$key];
-                }
-            } elseif ($action == 'get_all') {
-                if (!$this->dataHasExpired($lifetime, $finfo)) {
-                    return $finfo['entries'];
-                }
-            } elseif ($action == 'exists') {
-                if (!$this->dataHasExpired($lifetime, $finfo)
-                    && array_key_exists($key, $finfo['entries'])
-                ) {
-                    return true;
-                }
-            } elseif ($action == 'delete') {
-                unset($finfo['entries'][$key]);
-
-                return $this->saveNewEntries($finfo);
-            }
-        }
-
-        return false;
-    }
-
-    /**
      * JSON-encode the data and store it in the datastore file identifying it with
      * the key name, the data will be added to the file even if the key is
      * duplicated, but when getting the value of the same key later again it will
      * return only the value of the first occurrence found in the file.
      *
-     * @param  string  $key  Unique name to identify the data in the datastore file.
-     * @param  string  $data Mixed data stored in the datastore file following the unique key name.
-     * @return boolean       TRUE if the data was stored successfully, FALSE otherwise.
+     * @param  string $key  Unique name for the data.
+     * @param  mixed  $data Data to associate to the key.
+     * @return bool         True if the data was cached, false otherwise.
      */
     public function add($key = '', $data = '')
     {
-        return $this->handleKeyData($key, $data, 'add');
+        return $this->set($key, $data);
     }
 
     /**
      * Update the data of all the key names matching the one specified.
      *
-     * @param  string  $key  Unique name to identify the data in the datastore file.
-     * @param  string  $data Mixed data stored in the datastore file following the unique key name.
-     * @return boolean       TRUE if the data was stored successfully, FALSE otherwise.
+     * @param  string $key  Unique name for the data.
+     * @param  mixed  $data Data to associate to the key.
+     * @return bool         True if the cache data was updated, false otherwise.
      */
     public function set($key = '', $data = '')
     {
-        return $this->handleKeyData($key, $data, 'set');
+        if (!$this->validKeyName($key)) {
+            return self::throwException('Invalid cache key name');
+        }
+
+        $finfo = $this->getDatastoreInfo();
+        $line = sprintf("%s:%s\n", $key, json_encode($data));
+
+        return (bool) @file_put_contents($finfo['fpath'], $line, FILE_APPEND);
     }
 
     /**
      * Retrieve the first occurrence of the key found in the datastore file.
      *
-     * @param  string  $key      Unique name to identify the data in the datastore file.
-     * @param  integer $lifetime Life time of the key in the datastore file.
-     * @param  boolean $assoc    When TRUE returned objects will be converted into associative arrays.
-     * @return string            Mixed data stored in the datastore file following the unique key name.
+     * @param  string $key      Unique name for the data.
+     * @param  int    $lifetime Seconds before the data expires.
+     * @param  string $assoc    Force data to be converted to an array.
+     * @return mixed            Data associated to the key.
      */
-    public function get($key = '', $lifetime = 0, $assoc = false)
+    public function get($key = '', $lifetime = 0, $assoc = '')
     {
-        $assoc = ($assoc == 'array' ? true : $assoc);
+        if (!$this->validKeyName($key)) {
+            return self::throwException('Invalid cache key name');
+        }
 
-        return $this->handleKeyData($key, null, 'get', $lifetime, $assoc);
+        $finfo = $this->getDatastoreContent($assoc === 'array');
+
+        if ($this->dataHasExpired($lifetime, $finfo)
+            || !array_key_exists($key, $finfo['entries'])
+        ) {
+            return false;
+        }
+
+        return @$finfo['entries'][$key];
     }
 
     /**
      * Retrieve all the entries found in the datastore file.
      *
-     * @param  integer $lifetime Life time of the key in the datastore file.
-     * @param  boolean $assoc    When TRUE returned objects will be converted into associative arrays.
-     * @return string            Mixed data stored in the datastore file following the unique key name.
+     * @param  int    $lifetime Life time of the key in the datastore file.
+     * @param  string $assoc    Force data to be converted to an array.
+     * @return mixed            All the entries stored in the cache file.
      */
-    public function getAll($lifetime = 0, $assoc = false)
+    public function getAll($lifetime = 0, $assoc = '')
     {
-        $assoc = ($assoc == 'array' ? true : $assoc);
+        $finfo = $this->getDatastoreContent($assoc === 'array');
 
-        return $this->handleKeyData('temp', null, 'get_all', $lifetime, $assoc);
+        if ($this->dataHasExpired($lifetime, $finfo)) {
+            return false;
+        }
+
+        return $finfo['entries'];
     }
 
     /**
      * Check whether a specific key exists in the datastore file.
      *
-     * @param  string  $key Unique name to identify the data in the datastore file.
-     * @return boolean      TRUE if the key exists in the datastore file, FALSE otherwise.
+     * @param  string $key Unique name for the data.
+     * @return bool        True if the data exists, false otherwise.
      */
     public function exists($key = '')
     {
-        return $this->handleKeyData($key, null, 'exists');
+        if (!$this->validKeyName($key)) {
+            return self::throwException('Invalid cache key name');
+        }
+
+        $finfo = $this->getDatastoreContent(true);
+
+        return array_key_exists($key, $finfo['entries']);
     }
 
     /**
      * Delete any entry from the datastore file matching the key name specified.
      *
-     * @param  string  $key Unique name to identify the data in the datastore file.
-     * @return boolean      TRUE if the entries were removed, FALSE otherwise.
+     * @param  string $key Unique name for the data.
+     * @return bool        True if the data was deleted, false otherwise.
      */
     public function delete($key = '')
     {
-        return $this->handleKeyData($key, null, 'delete');
+        if (!$this->validKeyName($key)) {
+            return self::throwException('Invalid cache key name');
+        }
+
+        $finfo = $this->getDatastoreContent(true);
+
+        if (!array_key_exists($key, $finfo['entries'])) {
+            return true;
+        }
+
+        unset($finfo['entries'][$key]);
+
+        return $this->saveNewEntries($finfo);
+    }
+
+    /**
+     * Replaces the entire content of the cache file.
+     *
+     * @param  array $entries New data for the cache.
+     * @return bool           True if the cache was replaced.
+     */
+    public function override($entries = array())
+    {
+        return $this->saveNewEntries(
+            array(
+                'info' => $this->getDatastoreInfo(),
+                'entries' => $entries,
+            )
+        );
     }
 
     /**
      * Remove all the entries from the datastore file.
      *
-     * @return boolean Always TRUE unless the datastore file is not writable.
+     * @return bool True, unless the cache file is not writable.
      */
     public function flush()
     {
-        $finfo = $this->getDatastoreContent();
+        $filename = 'gddysec-' . $this->datastore . '.php';
 
-        if (array_key_exists('entries', $finfo)) {
-            $finfo['entries'] = array();
-        }
-
-        return $this->saveNewEntries($finfo);
+        return @unlink($this->dataStorePath($filename));
     }
 }

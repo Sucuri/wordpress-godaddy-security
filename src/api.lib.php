@@ -1,5 +1,19 @@
 <?php
 
+/**
+ * Code related to the api.lib.php interface.
+ *
+ * PHP version 5
+ *
+ * @category   Library
+ * @package    GoDaddy
+ * @subpackage GoDaddySecurity
+ * @author     Daniel Cid <dcid@sucuri.net>
+ * @copyright  2017 Sucuri Inc. - GoDaddy LLC.
+ * @license    https://www.godaddy.com/ - Proprietary
+ * @link       https://wordpress.org/plugins/godaddy-security
+ */
+
 if (!defined('GDDYSEC_INIT') || GDDYSEC_INIT !== true) {
     if (!headers_sent()) {
         /* Report invalid access if possible. */
@@ -25,71 +39,26 @@ if (!defined('GDDYSEC_INIT') || GDDYSEC_INIT !== true) {
  * APIs allow the combination of multiple APIs into new applications known as
  * mashups.
  *
- * @see https://en.wikipedia.org/wiki/Application_programming_interface#Web_APIs
+ * @category   Library
+ * @package    GoDaddy
+ * @subpackage GoDaddySecurity
+ * @author     Daniel Cid <dcid@sucuri.net>
+ * @copyright  2017 Sucuri Inc. - GoDaddy LLC.
+ * @license    https://www.godaddy.com/ - Proprietary
+ * @link       https://wordpress.org/plugins/godaddy-security
  */
 class GddysecAPI extends GddysecOption
 {
     /**
-     * Check whether the SSL certificates will be verified while executing a HTTP
-     * request or not. This is only for customization of the administrator, in fact
-     * not verifying the SSL certificates can lead to a "Man in the Middle" attack.
-     *
-     * @return boolean Whether the SSL certs will be verified while sending a request.
-     */
-    public static function verifySslCert()
-    {
-        return (self::get_option(':verify_ssl_cert') === 'true');
-    }
-
-    /**
-     * Seconds before consider a HTTP request as timeout.
-     *
-     * As for the 01/Jan/2016 if the number of seconds before a timeout is greater
-     * than sixty (which is one minute) the function will reset the option to its
-     * default value to keep the latency of the HTTP requests in a minimum to
-     * minimize the interruptions in the admins workflow. The normal connection
-     * timeout should be in the range of ten seconds, or fifteen if the DNS lookups
-     * are slow.
-     *
-     * @return integer Seconds to consider a HTTP request timeout.
-     */
-    public static function requestTimeout()
-    {
-        $timeout = (int) self::get_option(':request_timeout');
-
-        if ($timeout > GDDYSEC_MAX_REQUEST_TIMEOUT) {
-            self::delete_option(':request_timeout');
-
-            return self::requestTimeout();
-        }
-
-        return $timeout;
-    }
-
-    /**
-     * Generate an user-agent for the HTTP requests.
-     *
-     * @return string An user-agent for the HTTP requests.
-     */
-    private static function curlUserAgent()
-    {
-        return sprintf(
-            'WordPress/%s; %s',
-            self::site_version(),
-            self::get_domain()
-        );
-    }
-
-    /**
-     * Alternative to the built-in PHP function http_build_query.
+     * Alternative to the built-in PHP method http_build_query.
      *
      * Some PHP installations with different encoding or with different language
      * (German for example) might produce an unwanted behavior when building an
      * URL, because of this we decided to write our own URL query builder to
      * keep control of the output.
      *
-     * @param  array  $params May be an array or object containing properties.
-     * @return string         Returns a URL-encoded string.
+     * @param  array $params May be an array or object containing properties.
+     * @return string        Returns a URL-encoded string.
      */
     private static function buildQuery($params = array())
     {
@@ -103,136 +72,97 @@ class GddysecAPI extends GddysecOption
         return substr($trail, 1);
     }
 
-    private static function canCurlFollowRedirection()
-    {
-        $safe_mode = ini_get('safe_mode');
-        $open_basedir = ini_get('open_basedir');
-
-        if ($safe_mode === '1' || $safe_mode === 'On') {
-            return false;
-        }
-
-        if (!empty($open_basedir)) {
-            return false;
-        }
-
-        return true;
-    }
-
     /**
-     * Communicates with a remote URL and retrieves its content.
+     * Sends a HTTP request via WordPress WP_HTTP class.
      *
-     * Curl is a reflective object-oriented programming language for interactive
-     * web applications whose goal is to provide a smoother transition between
-     * formatting and programming. It makes it possible to embed complex objects
-     * in simple documents without needing to switch between programming
-     * languages or development platforms.
-     *
-     * Using Curl instead of the custom WordPress HTTP functions allow us to
-     * control the functionality at 100% without expecting breaking changes in
-     * newer versions of the code. For exampe, as of WordPress 4.6.x the result
-     * of executing the functions prefixed with "wp_remote_" returns an object
-     * WP_HTTP_Requests_Response that is not compatible with older implementations
-     * of the plugin.
-     *
+     * @suppress PhanNonClassMethodCall
      * @see https://secure.php.net/manual/en/book.curl.php
+     * @see https://developer.wordpress.org/reference/classes/wp_http/request/
      *
      * @param  string $url    The target URL where the request will be sent.
      * @param  string $method HTTP method that will be used to send the request.
      * @param  array  $params Parameters for the request defined in an associative array.
      * @param  array  $args   Request arguments like the timeout, headers, cookies, etc.
-     * @return array          Response object after the HTTP request is executed.
+     * @return mixed          HTTP response, JSON-decoded array, or false on failure.
      */
     public static function apiCall($url = '', $method = 'GET', $params = array(), $args = array())
     {
-        if ($url && ($method === 'GET' || $method === 'POST')) {
-            $output = self::apiCallCurl($url, $method, $params, $args);
-            $result = @json_decode($output, true);
-
-            if ($result) {
-                return $result;
-            }
-
-            return $output;
+        if (!$url) {
+            return self::throwException('URL is invalid');
         }
 
-        return false;
-    }
-
-    private static function apiCallCurl($url = '', $method = 'GET', $params = array(), $args = array())
-    {
-        if ($url
-            && function_exists('curl_init')
-            && ($method === 'GET' || $method === 'POST')
-        ) {
-            $curl = curl_init();
-            $timeout = self::requestTimeout();
-
-            if (is_array($args) && isset($args['timeout'])) {
-                $timeout = $args['timeout'];
-            }
-
-            // Add random request parameter to avoid request reset.
-            if (!empty($params) && !array_key_exists('time', $params)) {
-                $params['time'] = time();
-            }
-
-            if ($method === 'GET'
-                && is_array($params)
-                && !empty($params)
-            ) {
-                $url .= '?' . self::buildQuery($params);
-            }
-
-            curl_setopt($curl, CURLOPT_URL, $url);
-            curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
-            curl_setopt($curl, CURLOPT_USERAGENT, self::curlUserAgent());
-            curl_setopt($curl, CURLOPT_CUSTOMREQUEST, $method);
-            curl_setopt($curl, CURLOPT_CONNECTTIMEOUT, $timeout);
-            curl_setopt($curl, CURLOPT_TIMEOUT, $timeout * 2);
-
-            if (self::canCurlFollowRedirection()) {
-                curl_setopt($curl, CURLOPT_FOLLOWLOCATION, true);
-                curl_setopt($curl, CURLOPT_MAXREDIRS, 2);
-            }
-
-            if ($method === 'POST') {
-                curl_setopt($curl, CURLOPT_POST, true);
-                curl_setopt($curl, CURLOPT_POSTFIELDS, self::buildQuery($params));
-            }
-
-            if (self::verifySslCert()) {
-                curl_setopt($curl, CURLOPT_SSL_VERIFYHOST, 2);
-                curl_setopt($curl, CURLOPT_SSL_VERIFYPEER, true);
-            } else {
-                curl_setopt($curl, CURLOPT_SSL_VERIFYHOST, false);
-                curl_setopt($curl, CURLOPT_SSL_VERIFYPEER, false);
-            }
-
-            $output = curl_exec($curl);
-            $header = curl_getinfo($curl);
-            $errors = curl_error($curl);
-
-            curl_close($curl);
-
-            if (array_key_exists('http_code', $header)
-                && $header['http_code'] === 200
-                && !empty($output)
-            ) {
-                return $output;
-            }
-
-            Gddysec::throwException($errors);
+        if ($method !== 'GET' && $method !== 'POST') {
+            return self::throwException('Only GET and POST methods allowed');
         }
 
-        return false;
+        $res = null;
+        $timeout = GDDYSEC_MAX_REQUEST_TIMEOUT;
+        $args = is_array($args) ? $args : array();
+
+        if (isset($args['timeout'])) {
+            $timeout = (int) $args['timeout'];
+        }
+
+        /* include request arguments */
+        $args['method'] = $method;
+        $args['timeout'] = $timeout;
+        $args['redirection'] = 5;
+        $args['httpversion'] = '1.1';
+        $args['blocking'] = true;
+        $args['sslverify'] = true;
+
+        /* separate hardcoded query parameters */
+        if (empty($params) && strpos($url, '?')) {
+            $parts = @parse_url($url);
+
+            if (array_key_exists('query', $parts)) {
+                $portions = explode('&', $parts['query']);
+                $url = str_replace('?' . $parts['query'], '', $url);
+
+                foreach ($portions as $portion) {
+                    $bits = explode('=', $portion, 2);
+                    $params[$bits[0]] = $bits[1];
+                }
+            }
+        }
+
+        /* include current timestamp for trackability */
+        if (!array_key_exists('time', $params)) {
+            $params['time'] = time();
+        }
+
+        /* support HTTP GET requests */
+        if ($method === 'GET') {
+            $args['body'] = null;
+            $url .= '?' . self::buildQuery($params);
+            $res = wp_remote_get($url, $args);
+        }
+
+        /* support HTTP POST requests */
+        if ($method === 'POST') {
+            if (array_key_exists('a', $params)) {
+                /* include action to increase visibility */
+                $url .= '?a=' . $params['a'];
+            }
+
+            $args['body'] = $params;
+            $res = wp_remote_post($url, $args);
+        }
+
+        if (is_wp_error($res)) {
+            return self::throwException($res->get_error_message());
+        }
+
+        /* try to return a JSON-encode object */
+        $data = @json_decode($res['body'], true);
+        return $data ? $data : $res['body'];
     }
 
     /**
      * Check whether the plugin API key is valid or not.
      *
-     * @param  string  $api_key An unique string to identify this installation.
-     * @return boolean          True if the API key is valid, false otherwise.
+     * @param  string $api_key An unique string to identify this installation.
+     * @return bool            True if the API key is valid, false otherwise.
      */
     private static function isValidKey($api_key = '')
     {
@@ -242,38 +172,33 @@ class GddysecAPI extends GddysecOption
     /**
      * Store the API key locally.
      *
-     * @param  string  $api_key  An unique string of characters to identify this installation.
-     * @param  boolean $validate Whether the format of the key should be validated before store it.
-     * @return boolean           Either true or false if the key was saved successfully or not respectively.
+     * @param  string $api_key  An unique string of characters to identify this installation.
+     * @param  bool   $validate Whether the format of the key should be validated before store it.
+     * @return bool             Either true or false if the key was saved successfully or not respectively.
      */
     public static function setPluginKey($api_key = '', $validate = false)
     {
-        if ($validate) {
-            if (!self::isValidKey($api_key)) {
-                GddysecInterface::error('Invalid API key format');
-                return false;
-            }
+        if ($validate && !self::isValidKey($api_key)) {
+            return GddysecInterface::error('Invalid API key format');
         }
 
         if (!empty($api_key)) {
-            GddysecEvent::notify_event('plugin_change', 'API key updated successfully: ' . $api_key);
+            GddysecEvent::notifyEvent('plugin_change', 'API key was successfully set: ' . $api_key);
         }
 
-        return self::update_option(':api_key', $api_key);
+        return self::updateOption(':api_key', $api_key);
     }
 
     /**
      * Retrieve the API key from the local storage.
      *
-     * @return string|boolean The API key or false if it does not exists.
+     * @return string|bool The API key or false if it does not exists.
      */
     public static function getPluginKey()
     {
-        $api_key = self::get_option(':api_key');
+        $api_key = self::getOption(':api_key');
 
-        if (is_string($api_key)
-            && self::isValidKey($api_key)
-        ) {
+        if (is_string($api_key) && self::isValidKey($api_key)) {
             return $api_key;
         }
 
@@ -283,16 +208,15 @@ class GddysecAPI extends GddysecOption
     /**
      * Call an action from the remote API interface of our WordPress service.
      *
-     * @param  string  $method       HTTP method that will be used to send the request.
-     * @param  array   $params       Parameters for the request defined in an associative array of key-value.
-     * @param  boolean $send_api_key Whether the API key should be added to the request parameters or not.
-     * @param  array   $args         Request arguments like the timeout, redirections, headers, cookies, etc.
-     * @return array                 Response object after the HTTP request is executed.
+     * @param  string $method       HTTP method that will be used to send the request.
+     * @param  array  $params       Parameters for the request defined in an associative array of key-value.
+     * @param  bool   $send_api_key Whether the API key should be added to the request parameters or not.
+     * @param  array  $args         Request arguments like the timeout, redirections, headers, cookies, etc.
+     * @return array|bool           Response object after the HTTP request is executed.
      */
     public static function apiCallWordpress($method = 'GET', $params = array(), $send_api_key = true, $args = array())
     {
-        $url = GDDYSEC_API;
-        $params[ GDDYSEC_API_VERSION ] = 1;
+        $params[GDDYSEC_API_VERSION] = 1;
         $params['p'] = 'wordpress';
 
         if ($send_api_key) {
@@ -305,41 +229,16 @@ class GddysecAPI extends GddysecOption
             $params['k'] = $api_key;
         }
 
-        return self::apiCall($url, $method, $params, $args);
+        return self::apiCall(GDDYSEC_API_URL, $method, $params, $args);
     }
 
     /**
-     * Determine whether an API response was successful or not checking the expected
-     * generic variables and types, in case of an error a notification will appears
-     * in the administrator panel explaining the result of the operation.
+     * Determine whether an API response was successful or not by checking the
+     * expected generic variables and types, in case of an error a notification
+     * will appears in the administrator panel explaining the result of the
+     * operation.
      *
-     * @param  array   $response HTTP response after API endpoint execution.
-     * @param  boolean $enqueue  Add the log to the local queue on a failure.
-     * @return boolean           False if the API call failed, true otherwise.
-     */
-    private static function handleResponse($response = array(), $enqueue = true)
-    {
-        if ($response !== false) {
-            if (is_array($response)
-                && array_key_exists('status', $response)
-                && intval($response['status']) === 1
-            ) {
-                return true;
-            }
-
-            if (is_array($response)
-                && array_key_exists('messages', $response)
-                && !empty($response['messages'])
-            ) {
-                return self::handleErrorResponse($response, $enqueue);
-            }
-        }
-
-        return false;
-    }
-
-    /**
-     * Process failures in the HTTP response.
+     * For failures in the HTTP response:
      *
      * Log file not found: means that the API key used to execute the request is
      * not associated to the website, this may indicate that either the key was
@@ -351,304 +250,404 @@ class GddysecAPI extends GddysecOption
      * address of the site administrator was changed so the data is not valid
      * anymore.
      *
-     * Connection timeout: means that the API service is down either because the
-     * hosting provider has connectivity issues or because the code is being
-     * deployed. There is an option in the settings page that allows to temporarily
-     * disable the communication with the API service while the server is down, this
-     * allows the admins to keep the latency at zero and continue working in their
-     * websites without interruptions.
-     *
-     * SSL issues: depending on the options used to compile the OpenSSL library
-     * built by each hosting provider, the connection with the HTTPs version of the
-     * API service may be rejected because of a failure in the SSL algorithm check.
-     * There is an option in the settings page that allows to disable the SSL pair
-     * verification, this option it disable automatically when the error is detected
-     * for the first time.
-     *
-     * @param  array   $response HTTP response after API endpoint execution.
-     * @param  boolean $enqueue  Add the log to the local queue on a failure.
-     * @return boolean           False if the API call failed, true otherwise.
+     * @param  array $res HTTP response after API endpoint execution.
+     * @return bool       False if the API call failed, true otherwise.
      */
-    private static function handleErrorResponse($response = array(), $enqueue = true)
+    public static function handleResponse($res = array())
     {
-        $msg = 'Unknown error, there is no more information.';
+        if (!$res || getenv('GDDYSEC_NO_API_HANDLE')) {
+            return false;
+        }
 
-        if (is_array($response)
-            && array_key_exists('messages', $response)
-            && !empty($response['messages'])
+        if (is_array($res)
+            && array_key_exists('status', $res)
+            && intval($res['status']) === 1
         ) {
-            $msg = implode(".\x20", $response['messages']);
-            $raw = $msg; /* Keep a copy of the original message. */
-
-            // Special response for invalid API keys.
-            if (stripos($raw, 'log file not found') !== false) {
-                $key = GddysecOption::get_option(':api_key');
-                $msg .= '; this generally happens when you add an invalid API '
-                . 'key, the key will be deleted automatically to hide these w'
-                . 'arnings, if you want to recover it go to the settings page'
-                . ' and use the recover button to send the key to your email '
-                . 'address: ' . Gddysec::escape($key);
-
-                // GddysecOption::delete_option(':api_key');
-            }
-
-            // Check if the MX records as missing for API registration.
-            if (strpos($raw, 'Invalid email') !== false) {
-                $msg = 'Email has an invalid format, or the host '
-                . 'associated to the email has no MX records.';
-            }
+            return true;
         }
 
-        if (!empty($msg) && $enqueue) {
-            GddysecInterface::error($msg);
+        if (is_string($res) && !empty($res)) {
+            return GddysecInterface::error($res);
         }
 
-        return false;
+        if (!is_array($res)
+            || !isset($res['messages'])
+            || empty($res['messages'])
+        ) {
+            return GddysecInterface::error('Unknown error, there is no information');
+        }
+
+        $msg = implode(".\x20", $res['messages']);
+        $raw = $msg; /* Keep a copy of the original message. */
+
+        // Special response for invalid API keys.
+        if (stripos($raw, 'log file not found') !== false) {
+            $key = GddysecOption::getOption(':api_key');
+            $msg .= '; this generally happens when you use an invalid API key,'
+            . ' the key will be deleted to hide these warnings, if you want to'
+            . ' recover it go to the settings page and follow the instructions'
+            . ' in the "API Key" section: <code>' . Gddysec::escape($key)
+            . '</code>';
+
+            GddysecOption::deleteOption(':api_key');
+        }
+
+        // Special response for invalid firewall API keys.
+        if (stripos($raw, 'wrong api key') !== false) {
+            $key = GddysecOption::getOption(':cloudproxy_apikey');
+            $key = Gddysec::escape($key);
+            $msg .= sprintf('; invalid firewall API key: %s', $key);
+
+            GddysecOption::setRevProxy('disable', true);
+            GddysecOption::setAddrHeader('REMOTE_ADDR', true);
+            GddysecOption::deleteOption(':cloudproxy_apikey');
+
+            return GddysecInterface::error($msg);
+        }
+
+        // Stop SSL peer verification on connection failures.
+        if (stripos($raw, 'no alternative certificate')
+            || stripos($raw, 'error setting certificate')
+            || stripos($raw, 'SSL connect error')
+        ) {
+            $msg .= '. The website seems to be using an old version of the Ope'
+            . 'nSSL library or the CURL extension was compiled without support'
+            . ' for the algorithm used in the certificate installed in the API'
+            . ' service. Contact your hosting provider to fix this issue.';
+        }
+
+        // Check if the MX records as missing for API registration.
+        if (strpos($raw, 'Invalid email') !== false) {
+            $msg = 'Invalid email format or the host is missing MX records.';
+        }
+
+        return GddysecInterface::error($msg);
     }
 
     /**
      * Send a request to the API to register this site.
      *
-     * @param  string  $email Optional email address for the registration.
-     * @return boolean        True if the API key was generated, false otherwise.
+     * @param  string $email Optional email address for the registration.
+     * @return bool          True if the API key was generated, false otherwise.
      */
     public static function registerSite($email = '')
     {
         if (!is_string($email) || empty($email)) {
-            $email = self::get_site_email();
+            $email = self::getSiteEmail();
         }
 
-        $response = self::apiCallWordpress('POST', array(
-            'e' => $email,
-            's' => self::get_domain(),
-            'a' => 'register_site',
-        ), false);
+        $res = self::apiCallWordpress(
+            'POST',
+            array(
+                'e' => $email,
+                's' => self::getDomain(),
+                'a' => 'register_site',
+            ),
+            false
+        );
 
-        if (self::handleResponse($response)) {
-            self::setPluginKey($response['output']['api_key']);
-
-            GddysecEvent::schedule_task();
-            GddysecEvent::notify_event('plugin_change', 'Site registered and API key generated');
-            GddysecInterface::info('The API key for your site was successfully generated and saved.');
-
-            return true;
+        if (!self::handleResponse($res)) {
+            return false;
         }
 
-        return false;
+        self::setPluginKey($res['output']['api_key']);
+
+        GddysecEvent::installScheduledTask();
+        GddysecEvent::notifyEvent('plugin_change', 'API key was generated and set');
+
+        return GddysecInterface::info('API key successfully generated and saved.');
     }
 
     /**
      * Send a request to recover a previously registered API key.
      *
-     * @return boolean true if the API key was sent to the administrator email, false otherwise.
+     * @return bool True if the API key was sent to the admin email, false otherwise.
      */
     public static function recoverKey()
     {
-        $clean_domain = self::get_domain();
+        $domain = self::getDomain();
 
-        $response = self::apiCallWordpress('GET', array(
-            'e' => self::get_site_email(),
-            's' => $clean_domain,
-            'a' => 'recover_key',
-        ), false);
+        $res = self::apiCallWordpress(
+            'GET',
+            array(
+                'e' => self::getSiteEmail(),
+                's' => $domain,
+                'a' => 'recover_key',
+            ),
+            false
+        );
 
-        if (self::handleResponse($response)) {
-            GddysecEvent::notify_event('plugin_change', 'API key recovered for domain: ' . $clean_domain);
-            GddysecInterface::info($response['output']['message']);
-
-            return true;
+        if (!self::handleResponse($res)) {
+            return false;
         }
 
-        return false;
-    }
+        GddysecEvent::notifyEvent('plugin_change', 'API key recovery for domain: ' . $domain);
 
-    /**
-     * Send a request to the API to store and analyze the events of the site. An
-     * event can be anything from a simple request, an internal modification of the
-     * settings or files in the administrator panel, or a notification generated by
-     * this plugin.
-     *
-     * @param  string  $event   Event triggered by the core system functions.
-     * @param  integer $time    Timestamp when the event was originally triggered.
-     * @param  boolean $enqueue Add the log to the local queue on a failure.
-     * @return boolean          True if the event was logged, false otherwise.
-     */
-    public static function sendLog($event = '', $time = 0, $enqueue = true)
-    {
-        if (!empty($event)) {
-            $params = array();
-            $params['a'] = 'send_log';
-            $params['m'] = $event;
-
-            if (intval($time) > 0) {
-                $params['time'] = (int) $time;
-            }
-
-            $response = self::apiCallWordpress('POST', $params, true);
-
-            if (self::handleResponse($response, $enqueue)) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    /**
-     * Send all logs from the queue.
-     *
-     * Retry the HTTP calls for the logs that were not sent to the API service
-     * because of a connection failure or misconfiguration. Each successful call
-     * will remove the log from the queue and the failures will keep them until the
-     * next function call is executed.
-     *
-     * @return void
-     */
-    public static function sendLogsFromQueue()
-    {
-        $cache = new GddysecCache('auditqueue');
-        $entries = $cache->getAll();
-
-        if (is_array($entries) && !empty($entries)) {
-            foreach ($entries as $key => $entry) {
-                $result = self::sendLog(
-                    $entry->message,
-                    $entry->created_at,
-                    false
-                );
-
-                if ($result === true) {
-                    $cache->delete($key);
-                } else {
-                    /**
-                     * Stop loop on failures.
-                     *
-                     * If the log was successfully sent to the API service then we can continue
-                     * sending the other logs in the queue, otherwise the operation must be stopped
-                     * so it can be executed next time when the service is online, not stopping the
-                     * operation when one or more of the API calls fails will cause a very long
-                     * delay in the load of the page that is being requested.
-                     */
-                    break;
-                }
-            }
-        }
+        return GddysecInterface::info($res['output']['message']);
     }
 
     /**
      * Retrieve the event logs registered by the API service.
      *
-     * @param  integer $lines How many lines from the log file will be retrieved.
-     * @return string         The response of the API service.
+     * @param  int $lines Maximum number of logs to return.
+     * @return array|bool The data structure with the logs.
      */
     public static function getAuditLogs($lines = 50)
     {
-        $response = self::apiCallWordpress(
+        $res = self::apiCallWordpress(
             'GET',
-            array('a' => 'get_logs', 'l' => $lines),
-            true /* send API key with the request */,
-            array('timeout' => 20) /* force more time */
+            array(
+                'a' => 'get_logs',
+                'l' => $lines,
+            )
         );
 
-        if (self::handleResponse($response)) {
-            $response['output_data'] = array();
-            $log_pattern = '/^([0-9\-]+) ([0-9:]+) (\S+) : (.+)/';
-            $extra_pattern = '/(.+ \(multiple entries\):) (.+)/';
-            $generic_pattern = '/^@?([A-Z][a-z]{3,7}): ([^;]+; )?(.+)/';
-            $auth_pattern = '/^User authentication (succeeded|failed): ([^<;]+)/';
+        if (!self::handleResponse($res)) {
+            return false;
+        }
 
-            foreach ($response['output'] as $log) {
-                if (@preg_match($log_pattern, $log, $log_match)) {
-                    $log_data = array(
-                        'event' => 'notice',
-                        'date' => '',
-                        'time' => '',
-                        'datetime' => '',
-                        'timestamp' => 0,
-                        'account' => $log_match[3],
-                        'username' => 'system',
-                        'remote_addr' => '127.0.0.1',
-                        'message' => $log_match[4],
-                        'file_list' => false,
-                        'file_list_count' => 0,
-                    );
+        return self::parseAuditLogs($res);
+    }
 
-                    // Extract and fix the date and time using the Eastern time zone.
-                    $datetime = sprintf('%s %s EDT', $log_match[1], $log_match[2]);
-                    $log_data['timestamp'] = strtotime($datetime);
-                    $log_data['datetime'] = date('Y-m-d H:i:s', $log_data['timestamp']);
-                    $log_data['date'] = date('Y-m-d', $log_data['timestamp']);
-                    $log_data['time'] = date('H:i:s', $log_data['timestamp']);
+    /**
+     * Returns the security logs from the system queue.
+     *
+     * @return array The data structure with the logs.
+     */
+    public static function getAuditLogsFromQueue()
+    {
+        $auditlogs = array();
+        $cache = new GddysecCache('auditqueue');
+        $events = $cache->getAll();
 
-                    // Extract more information from the generic audit logs.
-                    $log_data['message'] = str_replace('<br>', '; ', $log_data['message']);
+        if (is_array($events) && !empty($events)) {
+            $events = array_reverse($events);
 
-                    if (@preg_match($generic_pattern, $log_data['message'], $log_extra)) {
-                        $log_data['event'] = strtolower($log_extra[1]);
-                        $log_data['message'] = trim($log_extra[3]);
+            foreach ($events as $micro => $message) {
+                if (!is_string($message)) {
+                    /* incompatible JSON data */
+                    continue;
+                }
 
-                        // Extract the username and remote address from the log.
-                        if (!empty($log_extra[2])) {
-                            $username_address = rtrim($log_extra[2], ";\x20");
+                $offset = strpos($micro, '_');
+                $time = substr($micro, 0, $offset);
+                $auditlogs[] = sprintf(
+                    '%s %s : %s',
+                    Gddysec::datetime($time, 'Y-m-d H:i:s'),
+                    Gddysec::getSiteEmail(),
+                    $message
+                );
+            }
+        }
 
-                            // Separate the username from the remote address.
-                            if (strpos($username_address, ",\x20") !== false) {
-                                $usip_parts = explode(",\x20", $username_address, 2);
+        $res = array(
+            'status' => 1,
+            'action' => 'get_logs',
+            'request_time' => time(),
+            'verbose' => 0,
+            'output' => array_reverse($auditlogs),
+            'total_entries' => count($auditlogs),
+        );
 
-                                if (count($usip_parts) == 2) {
-                                    // Separate the username from the display name.
-                                    $log_data['username'] = @preg_replace('/^.+ \((.+)\)$/', '$1', $usip_parts[0]);
-                                    $log_data['remote_addr'] = $usip_parts[1];
-                                }
-                            } else {
-                                $log_data['remote_addr'] = $username_address;
-                            }
-                        }
+        return self::parseAuditLogs($res);
+    }
 
-                        // Fix old user authentication logs for backward compatibility.
-                        $log_data['message'] = str_replace(
-                            'logged in',
-                            'authentication succeeded',
-                            $log_data['message']
-                        );
+    /**
+     * Reads, parses and extracts relevant data from the security logs.
+     *
+     * @param  array $res JSON-decoded logs.
+     * @return array      Full data extracted from the logs.
+     */
+    private static function parseAuditLogs($res)
+    {
+        if (!is_array($res)) {
+            $res = array();
+        }
 
-                        if (@preg_match($auth_pattern, $log_data['message'], $user_match)) {
-                            $log_data['username'] = $user_match[2];
-                        }
+        $res['output_data'] = array();
+
+        foreach ((array) @$res['output'] as $log) {
+            /* YYYY-MM-dd HH:ii:ss EMAIL : MESSAGE: (multiple entries): a,b,c */
+            if (strpos($log, "\x20:\x20") === false) {
+                continue; /* ignore; invalid format */
+            }
+
+            $log_data = array(
+                'event' => 'notice',
+                'date' => '',
+                'time' => '',
+                'datetime' => '',
+                'timestamp' => 0,
+                'account' => '',
+                'username' => 'system',
+                'remote_addr' => '127.0.0.1',
+                'message' => '',
+                'file_list' => false,
+                'file_list_count' => 0,
+            );
+
+            list($left, $right) = explode("\x20:\x20", $log, 2);
+            $dateAndEmail = explode("\x20", $left, 3);
+
+            /* set basic information */
+            $log_data['message'] = $right;
+            $log_data['account'] = $dateAndEmail[2];
+
+            /* extract and fix the date and time using the Eastern time zone */
+            $datetime = sprintf('%s %s EDT', $dateAndEmail[0], $dateAndEmail[1]);
+            $log_data['timestamp'] = strtotime($datetime);
+            $log_data['datetime'] = Gddysec::datetime($log_data['timestamp'], 'Y-m-d H:i:s');
+            $log_data['date'] = Gddysec::datetime($log_data['timestamp'], 'Y-m-d');
+            $log_data['time'] = Gddysec::datetime($log_data['timestamp'], 'H:i:s');
+
+            /* extract more information from the generic audit logs */
+            $log_data['message'] = str_replace('<br>', ";\x20", $log_data['message']);
+
+            $eventTypes = self::getAuditEventTypes();
+            $eventTypes = array_keys($eventTypes);
+
+            /* LEVEL: USERNAME, IP; MESSAGE */
+            if (strpos($log_data['message'], ":\x20") && strpos($log_data['message'], ";\x20")) {
+                $offset = strpos($log_data['message'], ":\x20");
+                $level = substr($log_data['message'], 0, $offset);
+                $log_data['event'] = strtolower($level);
+
+                /* ignore; invalid event type */
+                if (!in_array($log_data['event'], $eventTypes)) {
+                    continue;
+                }
+
+                /* extract the IP address */
+                $log_data['message'] = substr($log_data['message'], $offset + 2);
+                $offset = strpos($log_data['message'], ";\x20");
+                $log_data['remote_addr'] = substr($log_data['message'], 0, $offset);
+
+                /* extract the username */
+                if (strpos($log_data['remote_addr'], ",\x20")) {
+                    $index = strpos($log_data['remote_addr'], ",\x20");
+                    $log_data['username'] = substr($log_data['remote_addr'], 0, $index);
+                    $log_data['remote_addr'] = substr($log_data['remote_addr'], $index + 2);
+                }
+
+                /* fix old user authentication logs for backward compatibility */
+                $log_data['message'] = substr($log_data['message'], $offset + 2);
+                $log_data['message'] = str_replace(
+                    'logged in',
+                    'authentication succeeded',
+                    $log_data['message']
+                );
+
+                /* extract the username of a successful/failed login */
+                if (strpos($log_data['message'], "User authentication\x20") === 0) {
+                    $offset = strpos($log_data['message'], ":\x20");
+                    $username = substr($log_data['message'], $offset + 2);
+                    if (strpos($username, ';') !== false) {
+                        $username = substr($username, 0, strpos($username, ';'));
                     }
-
-                    // Extract more information from the special formatted logs.
-                    if (@preg_match($extra_pattern, $log_data['message'], $log_extra)) {
-                        $log_data['message'] = $log_extra[1];
-                        $log_extra[2] = str_replace(', new size', '; new size', $log_extra[2]);
-                        $log_extra[2] = str_replace(",\x20", ";\x20", $log_extra[2]);
-                        $log_data['file_list'] = explode(',', $log_extra[2]);
-                        $log_data['file_list_count'] = count($log_data['file_list']);
-                    }
-
-                    $response['output_data'][] = $log_data;
+                    $log_data['username'] = $username;
                 }
             }
 
-            return $response;
+            /* extract more information from the special formatted logs */
+            if (strpos($log_data['message'], "(multiple entries):\x20")) {
+                $offset = strpos($log_data['message'], "(multiple entries):\x20");
+                $message = substr($log_data['message'], 0, $offset + 19);
+                $entries = substr($log_data['message'], $offset + 20);
+
+                $log_data['message'] = $message;
+                $entries = str_replace(', new size', '; new size', $entries);
+                $entries = str_replace(",\x20", ";\x20", $entries);
+                $log_data['file_list'] = explode(',', $entries);
+                $log_data['file_list_count'] = count($log_data['file_list']);
+            }
+
+            /* extract additional details from the message */
+            if (strpos($log_data['message'], '; details:')) {
+                $idx = strpos($log_data['message'], '; details:');
+                $message = substr($log_data['message'], 0, $idx);
+                $details = substr($log_data['message'], $idx + 11);
+
+                $log_data['message'] = $message . ' (details):';
+                $log_data['file_list'] = explode(',', $details);
+                $log_data['file_list_count'] = count($log_data['file_list']);
+            }
+
+            $log_data = self::getLogsHotfix($log_data);
+
+            if ($log_data) {
+                $res['output_data'][] = $log_data;
+            }
         }
 
-        return false;
+        return $res;
+    }
+
+    /**
+     * Modifies some of the security logs to detail the information.
+     *
+     * @param  array $data Valid security log data structure.
+     * @return array|bool  Modified security log.
+     */
+    private static function getLogsHotfix($data)
+    {
+        /**
+         * PHP Compatibility Checker
+         *
+         * The WP Engine PHP Compatibility Checker can be used by any WordPress
+         * website on any web host to check PHP version compatibility. This
+         * plugin will lint theme and plugin code inside your WordPress file
+         * system and give you back a report of compatibility issues for you to
+         * fix.
+         *
+         * @see https://wordpress.org/plugins/php-compatibility-checker/
+         */
+        if (isset($data['message']) && strpos($data['message'], 'Wpephpcompat_jobs') === 0) {
+            $offset = strpos($data['message'], "ID:\x20");
+            $id = substr($data['message'], $offset + 4);
+            $id = substr($id, 0, strpos($id, ';'));
+
+            $offset = strpos($data['message'], "name:\x20");
+            $name = substr($data['message'], $offset + 6);
+
+            $data['message'] = sprintf(
+                'WP Engine PHP Compatibility Checker: %s (created post #%d as cache)',
+                $name, /* plugin or theme name */
+                $id /* unique post or page identifier */
+            );
+        }
+
+        return $data;
+    }
+
+    /**
+     * Get a list of valid audit event types with their respective colors.
+     *
+     * @return array Valid audit event types with their colors.
+     */
+    public static function getAuditEventTypes()
+    {
+        return array(
+            'critical' => '#000000',
+            'debug' => '#c690ec',
+            'error' => '#f27d7d',
+            'info' => '#5bc0de',
+            'notice' => '#428bca',
+            'warning' => '#f0ad4e',
+        );
     }
 
     /**
      * Parse the event logs with multiple entries.
      *
      * @param  string $event_log Event log that will be processed.
-     * @return array             List of parts of the event log.
+     * @return string|array      List of parts of the event log.
      */
     public static function parseMultipleEntries($event_log = '')
     {
-        if (@preg_match('/^(.*:\s)\(multiple entries\):\s(.+)/', $event_log, $match)) {
-            $event_log = array();
-            $event_log[] = trim($match[1]);
-            $grouped_items = @explode(',', $match[2]);
-            $event_log = array_merge($event_log, $grouped_items);
+        $pattern = "\x20(multiple entries):\x20";
+
+        if (strpos($event_log, $pattern)) {
+            return explode(',', str_replace($pattern, ',', $event_log));
         }
 
         return $event_log;
@@ -660,99 +659,145 @@ class GddysecAPI extends GddysecOption
      * information of the audit logs alerting the administrator of suspicious
      * changes in the system.
      *
-     * @param  string  $hashes The information gathered after the scanning of the site's files.
-     * @return boolean         true if the hashes were stored, false otherwise.
+     * @param  string $hashes The information gathered after the scanning of the site's files.
+     * @return bool           True if the hashes were stored, false otherwise.
      */
     public static function sendHashes($hashes = '')
     {
-        if (!empty($hashes)) {
-            $response = self::apiCallWordpress('POST', array(
-                'a' => 'send_hashes',
-                'h' => $hashes,
-            ));
-
-            if (self::handleResponse($response)) {
-                return true;
-            }
+        if (empty($hashes)) {
+            return false;
         }
 
-        return false;
+        $params = array('a' => 'send_hashes', 'h' => $hashes);
+        $res = self::apiCallWordpress('POST', $params);
+
+        return self::handleResponse($res);
     }
 
     /**
-     * Scan a website through the public SiteCheck API [1] for known malware,
-     * blacklisting status, website errors, and out-of-date software.
+     * Returns the URL for the WordPress checksums API service.
      *
-     * [1] https://sitecheck.sucuri.net/
-     *
-     * @param  string  $domain The clean version of the website's domain.
-     * @param  boolean $clear  Request the results from a fresh scan or not.
-     * @return object          JSON encoded website scan results.
+     * @return string URL for the WordPress checksums API.
      */
-    public static function getSitecheckResults($domain = '', $clear = true)
+    public static function checksumAPI()
     {
-        if (!empty($domain)) {
-            $params = array();
-            $timeout = (int) GddysecOption::get_option(':sitecheck_timeout');
-            $params['scan'] = $domain;
-            $params['fromwp'] = 2;
-            $params['json'] = 1;
+        $url = 'https://api.wordpress.org/core/checksums/1.0/?version={version}&locale={locale}';
+        $custom = GddysecOption::getOption(':checksum_api');
 
-            // Request a fresh scan or not.
-            if ($clear === true) {
-                $params['clear'] = 1;
-            }
-
-            $response = self::apiCall(
-                'https://sitecheck.sucuri.net/',
-                'GET',
-                $params,
-                array(
-                    'assoc' => true,
-                    'timeout' => $timeout,
-                )
+        if ($custom) {
+            $url = sprintf(
+                'https://api.github.com/repos/%s/git/trees/master?recursive=1',
+                $custom /* expect: username/repository */
             );
-
-            return $response;
         }
 
-        return false;
+        $url = str_replace('{version}', Gddysec::siteVersion(), $url);
+        $url = str_replace('{locale}', get_locale(), $url);
+
+        return $url;
     }
 
     /**
-     * Retrieve a list with the checksums of the files in a specific version of WordPress.
+     * Returns the name of the hash to use in the integrity tool
+     *
+     * By default, the plugin will use MD5 to hash the content of the specified
+     * file, however, if the core integrity tool is using a custom URL, and this
+     * URL is pointing to GitHub API, then we will assume that the checksum that
+     * comes from this service is using SHA1.
+     *
+     * @return string Hash to use in the integrity tool.
+     */
+    public static function checksumAlgorithm()
+    {
+        return strpos(self::checksumAPI(), '//api.github.com') ? 'sha1' : 'md5';
+    }
+
+    /**
+     * Calculates the md5/sha1 hash of a given file.
+     *
+     * When the user decides to configure the integrity tool to use the checksum
+     * from a GitHub repository the plugin will have to use the SHA1 algorithm
+     * instead of MD5 (which is what WordPress uses in their API). For this, we
+     * will have to calculate the GIT hash object of the file which is basically
+     * the merge of the text "blob" a single white space, the length of the text
+     * a null byte and then the text in itself (content of the file).
+     *
+     * Example:
+     *
+     * - Input: "hello world\n"
+     * - GIT (object): "blob 16\u0000hello world\n"
+     * - GIT (shaobj): "3b18e512dba79e4c8300dd08aeb37f8e728b8dad"
+     *
+     * @see https://git-scm.com/book/en/v2/Git-Internals-Git-Objects#_object_storage
+     *
+     * @param  string $algorithm Either md5 or sha1.
+     * @param  string $filename  Absolute path to the given file.
+     * @return string            Hash of the given file.
+     */
+    public static function checksum($algorithm, $filename)
+    {
+        if ($algorithm === 'sha1') {
+            $content = GddysecFileInfo::fileContent($filename);
+            return @sha1("blob\x20" . strlen($content) . "\x00" . $content);
+        }
+
+        return @md5_file($filename);
+    }
+
+    /**
+     * Returns the checksum of all the files of the current WordPress version.
+     *
+     * The webmaster can change this URL using an option form the settings page.
+     * This allows them to control which repository will be used to check the
+     * integrity of the installation.
+     *
+     * For example, projectnami.org offers an option to use Microsoft SQL Server
+     * instead of MySQL has a different set of files and even with the same
+     * filenames many of them have been modified to support the new database
+     * engine, since the checksums are different than the official ones the
+     * number of false positives will increase. This option allows the webmaster
+     * to point the plugin to a different URL where the new checksums for this
+     * project will be retrieved.
+     *
+     * If the custom API is part of GitHub infrastructure, the plugin will try
+     * to build the expected JSON object from the output, if it fails it will
+     * pass the unmodified response to the rest of the code and try to analyze
+     * the integrity of the installation with that information.
      *
      * @see Release Archive https://wordpress.org/download/release-archive/
+     * @see https://api.github.com/repos/user/repo/git/trees/master?recursive=1
      *
-     * @param  integer $version Valid version number of the WordPress project.
-     * @return object           Associative object with the relative filepath and the checksums of the project files.
+     * @return array|bool Checksums of the WordPress installation.
      */
-    public static function getOfficialChecksums($version = 0)
+    public static function getOfficialChecksums()
     {
-        $language = GddysecOption::get_option(':language');
-        $response = self::apiCall(
-            'https://api.wordpress.org/core/checksums/1.0/',
-            'GET',
-            array(
-                'version' => $version,
-                'locale' => $language,
-            )
-        );
+        $url = self::checksumAPI();
+        $version = Gddysec::siteVersion();
+        $res = self::apiCall($url, 'GET', array());
 
-        if (is_array($response)
-            && array_key_exists('checksums', $response)
-            && !empty($response['checksums'])
+        if (is_array($res)
+            && array_key_exists('sha', $res)
+            && array_key_exists('url', $res)
+            && array_key_exists('tree', $res)
+            && strpos($url, '//api.github.com')
         ) {
-            if (count((array) $response['checksums']) <= 1
-                && array_key_exists($version, $response['checksums'])
-            ) {
-                return $response['checksums'][$version];
-            } else {
-                return $response['checksums'];
+            $checksums = array();
+            foreach ($res['tree'] as $meta) {
+                $checksums[$meta['path']] = $meta['sha'];
             }
+            $res = array('checksums' => array($version => $checksums));
         }
 
-        return false;
+        if (!isset($res['checksums'])) {
+            return false;
+        }
+
+        /* checksums for a specific version */
+        if (isset($res['checksums'][$version])) {
+            return $res['checksums'][$version];
+        }
+
+        return $res['checksums'];
     }
 
     /**
@@ -764,25 +809,37 @@ class GddysecAPI extends GddysecOption
      * @see https://i18n.svn.wordpress.org/
      * @see https://core.svn.wordpress.org/tags/VERSION_NUMBER/
      *
-     * @param  string $filepath Relative file path of a project core file.
-     * @param  string $version  Optional site version, default will be the global version number.
-     * @return string           Full content of the official file retrieved, false if the file was not found.
+     * @param  string $filename Relative path of a core file.
+     * @return string|bool      Original code for the core file, false otherwise.
      */
-    public static function getOriginalCoreFile($filepath = '', $version = 0)
+    public static function getOriginalCoreFile($filename)
     {
-        if (!empty($filepath)) {
-            if ($version == 0) {
-                $version = self::site_version();
-            }
+        $version = self::siteVersion();
+        $url = 'https://core.svn.wordpress.org/tags/{version}/{filename}';
+        $custom = GddysecOption::getOption(':checksum_api');
 
-            $url = sprintf('https://core.svn.wordpress.org/tags/%s/%s', $version, $filepath);
-            $response = self::apiCall($url, 'GET');
-
-            if ($response) {
-                return $response;
-            }
+        if ($custom) {
+            $url = sprintf(
+                'https://raw.githubusercontent.com/%s/master/{filename}',
+                $custom /* expect: username/repository */
+            );
         }
 
-        return false;
+        $url = str_replace('{version}', $version, $url);
+        $url = str_replace('{filename}', $filename, $url);
+
+        $resp = self::apiCall($url, 'GET');
+
+        if (strpos($resp, '404 Not Found') !== false) {
+            /* not found comes from the official WordPress API */
+            return self::throwException('WordPress version is not supported anymore');
+        }
+
+        if (strpos($resp, '400: Invalid request') !== false) {
+            /* invalid request comes from the unofficial GitHub API */
+            return self::throwException('WordPress version is not supported anymore');
+        }
+
+        return $resp ? $resp : false;
     }
 }

@@ -2,76 +2,125 @@
 /* jshint unused:false */
 
 function gddysecAlertClose (id) {
-    var a = document.getElementById('gddysec-alert-' + id);
-    a.parentNode.removeChild(a);
+    var element = document.getElementById('gddysec-alert-' + id);
+    element.parentNode.removeChild(element);
 }
 
 jQuery(document).ready(function ($) {
-    $('.gddysec-modal-btn').on('click', function (event) {
+    $('.gddysec-container').on('click', '.gddysec-modal-button', function (event) {
         event.preventDefault();
-
         var modalid = $(this).data('modalid');
-
-        $('div.' + modalid).removeClass('gddysec-hidden');
+        $('div.' + modalid + '-modal').removeClass('gddysec-hidden');
     });
 
-    $('.gddysec-overlay, .gddysec-modal-close').on('click', function(event) {
+    $('.gddysec-container').on('click', '.gddysec-overlay, .gddysec-modal-close', function (event) {
         event.preventDefault();
-
         $('.gddysec-overlay').addClass('gddysec-hidden');
         $('.gddysec-modal').addClass('gddysec-hidden');
     });
 
-    if ($('.gddysec-tabs').length) {
-        var d = 'gddysec-hidden';
-        var b = 'gddysec-tab-active';
-        var a = location.href.split('#')[1];
+    $('.gddysec-container').on('click', '.gddysec-show-more', function (event) {
+        event.preventDefault();
+        var button = $(this);
+        var target = button.attr('data-target');
+        var status = button.attr('data-status');
+        if (status === 'more') {
+            button.attr('data-status', 'less');
+            $(target).removeClass('gddysec-hidden');
+            button.find('.gddysec-show-more-title').html('Show Less Info');
+        } else {
+            button.attr('data-status', 'more');
+            $(target).addClass('gddysec-hidden');
+            button.find('.gddysec-show-more-title').html('Show More Info');
+        }
+    });
 
-        $('.gddysec-tabs > ul a').on('click', function (event) {
+    if ($('.gddysec-tabs').length) {
+        var hiddenState = 'gddysec-hidden';
+        var visibleState = 'gddysec-visible';
+        var activeState = 'gddysec-tab-active';
+        var locationHash = location.href.split('#')[1];
+
+        $('.gddysec-container').on('click', '.gddysec-tabs-buttons a', function (event) {
             event.preventDefault();
 
-            var tabbtn = $(this);
-            var tabname = tabbtn.data('tabname');
-            var f = $('.gddysec-tab-containers > #gddysec-' + tabname);
+            var button = $(this);
+            var uniqueid = button.attr('href').split('#')[1];
 
-            if (f.length) {
-                var g = location.href.replace(location.hash, '');
-                var i = g + '#' + tabname;
+            if (uniqueid !== undefined) {
+                var container = $('.gddysec-tabs-containers > #gddysec-tabs-' + uniqueid);
 
-                window.history.pushState({}, document.title, i);
+                if (container.length) {
+                    var rawurl = location.href.replace(location.hash, '');
+                    var newurl = rawurl + '#' + uniqueid;
 
-                $('.gddysec-tabs > ul a').removeClass(b);
-                $('.gddysec-tab-containers > div').addClass(d);
+                    window.history.pushState({}, document.title, newurl);
 
-                tabbtn.addClass(b);
-                f.removeClass(d);
+                    $('.gddysec-tabs-buttons a').removeClass(activeState);
+                    $('.gddysec-tabs-containers > div').addClass(hiddenState);
+
+                    button.addClass(activeState);
+                    container.addClass(visibleState);
+                    container.removeClass(hiddenState);
+                }
             }
         });
 
-        $('.gddysec-tab-containers > div').addClass(d);
+        $('.gddysec-tabs-containers > div').addClass(hiddenState);
 
-        if (a !== undefined) {
-            $('.gddysec-tabs > ul li a').each(function(e, f) {
-                if ($(f).data('tabname') === a) {
-                    $(f).trigger('click');
+        if (locationHash !== undefined) {
+            $('.gddysec-tabs-buttons a').each(function (e, button) {
+                if ($(button).attr('href').split('#')[1] === locationHash) {
+                    $(button).trigger('click');
                 }
             });
         } else {
-            $('.gddysec-tabs > ul li:first-child a').trigger('click');
+            $('.gddysec-tabs-buttons li:first-child a').trigger('click');
         }
     }
 
-    $('body').on('click', '.gddysec-reveal', function (event) {
-        event.preventDefault();
+    $('.gddysec-container').on('mouseover', '.gddysec-tooltip', function (event) {
+        var element = $(this);
+        var content = element.attr('content');
 
-        var target = $(this).attr('data-target');
-        $('.gddysec-' + target).removeClass('gddysec-hidden');
+        if (!content) {
+            return;
+        }
+
+        /* create instance of tooltip container */
+        var tooltip = $('<div>', { 'class': 'gddysec-tooltip-object' });
+
+        if (element.attr('tooltip-width')) {
+            var customWidth = element.attr('tooltip-width');
+            tooltip.css('width', customWidth);
+        }
+
+        /* interpret HTML code as is; careful with XSS */
+        if (element.attr('tooltip-html') === 'true') {
+            tooltip.html(content);
+        } else {
+            tooltip.text(content);
+        }
+
+        element.append(tooltip);
+        var arrowHeight = 10; /* border width */
+        var tooltipHeight = tooltip.outerHeight();
+        tooltip.css('top', (tooltipHeight + arrowHeight) * -1);
+
+        var positionLeft = 0;
+        var elementWidth = element.outerWidth();
+        var tooltipWidth = tooltip.outerWidth();
+
+        if (elementWidth === tooltipWidth) {
+            tooltip.css('left', 0);
+        } else if (elementWidth > tooltipWidth) {
+            tooltip.css('left', (elementWidth - tooltipWidth) / 2);
+        } else if (elementWidth < tooltipWidth) {
+            tooltip.css('left', ((tooltipWidth - elementWidth) / 2) * -1);
+        }
     });
 
-    $('body').on('click', '.gddysec-corefiles .manage-column :checkbox', function () {
-        $('.gddysec-corefiles tbody :checkbox').each(function(key, element) {
-            var checked = $(element).is(':checked');
-            $(element).attr('checked', !checked);
-        });
+    $('.gddysec-container').on('mouseout', '.gddysec-tooltip', function (event) {
+        $(this).find('.gddysec-tooltip-object').remove();
     });
 });

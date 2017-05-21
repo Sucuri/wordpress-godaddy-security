@@ -1,5 +1,19 @@
 <?php
 
+/**
+ * Code related to the option.lib.php interface.
+ *
+ * PHP version 5
+ *
+ * @category   Library
+ * @package    GoDaddy
+ * @subpackage GoDaddySecurity
+ * @author     Daniel Cid <dcid@sucuri.net>
+ * @copyright  2017 Sucuri Inc. - GoDaddy LLC.
+ * @license    https://www.godaddy.com/ - Proprietary
+ * @link       https://wordpress.org/plugins/godaddy-security
+ */
+
 if (!defined('GDDYSEC_INIT') || GDDYSEC_INIT !== true) {
     if (!headers_sent()) {
         /* Report invalid access if possible. */
@@ -23,13 +37,20 @@ if (!defined('GDDYSEC_INIT') || GDDYSEC_INIT !== true) {
  * name. This page contains the technical documentation needed to use the
  * Options API. A list of default options can be found in the Option Reference.
  *
- * Note that the _site_ functions are essentially the same as their
+ * Note that the _site_ methods are essentially the same as their
  * counterparts. The only differences occur for WP Multisite, when the options
  * apply network-wide and the data is stored in the wp_sitemeta table under the
  * given custom name.
  *
- * @see https://codex.wordpress.org/Option_Reference
- * @see https://codex.wordpress.org/Options_API
+ * @category   Library
+ * @package    GoDaddy
+ * @subpackage GoDaddySecurity
+ * @author     Daniel Cid <dcid@sucuri.net>
+ * @copyright  2017 Sucuri Inc. - GoDaddy LLC.
+ * @license    https://www.godaddy.com/ - Proprietary
+ * @link       https://wordpress.org/plugins/godaddy-security
+ * @see        https://codex.wordpress.org/Option_Reference
+ * @see        https://codex.wordpress.org/Options_API
  */
 class GddysecOption extends GddysecRequest
 {
@@ -38,47 +59,39 @@ class GddysecOption extends GddysecRequest
      *
      * @return array Default values for all the plugin's options.
      */
-    public static function get_default_option_values()
+    private static function getDefaultOptionValues()
     {
         $defaults = array(
             'gddysec_account' => '',
-            'gddysec_addr_header' => 'HTTP_X_GDDYSEC_CLIENTIP',
-            'gddysec_api_handler' => 'curl',
+            'gddysec_addr_header' => 'HTTP_X_SUCURI_CLIENTIP',
             'gddysec_api_key' => false,
             'gddysec_api_protocol' => 'https',
             'gddysec_api_service' => 'enabled',
-            'gddysec_audit_report' => 'disabled',
+            'gddysec_checksum_api' => '',
             'gddysec_cloudproxy_apikey' => '',
-            'gddysec_comment_monitor' => 'disabled',
-            'gddysec_datastore_path' => dirname(self::optionsFilePath()),
-            'gddysec_dismiss_setup' => 'disabled',
             'gddysec_dns_lookups' => 'enabled',
-            'gddysec_email_subject' => 'GoDaddy Security Alert, :domain, :event',
+            'gddysec_email_subject' => '',
             'gddysec_emails_per_hour' => 5,
             'gddysec_emails_sent' => 0,
-            'gddysec_errorlogs_limit' => 30,
-            'gddysec_fs_scanner' => 'enabled',
-            'gddysec_ignore_scanning' => 'disabled',
             'gddysec_ignored_events' => '',
-            'gddysec_language' => 'en_US',
             'gddysec_last_email_at' => time(),
             'gddysec_lastlogin_redirection' => 'enabled',
-            'gddysec_logs4report' => 500,
             'gddysec_maximum_failed_logins' => 30,
             'gddysec_notify_available_updates' => 'disabled',
             'gddysec_notify_bruteforce_attack' => 'disabled',
             'gddysec_notify_failed_login' => 'enabled',
-            'gddysec_notify_plugin_activated' => 'disabled',
-            'gddysec_notify_plugin_change' => 'disabled',
+            'gddysec_notify_failed_password' => 'disabled',
+            'gddysec_notify_plugin_activated' => 'enabled',
+            'gddysec_notify_plugin_change' => 'enabled',
             'gddysec_notify_plugin_deactivated' => 'disabled',
             'gddysec_notify_plugin_deleted' => 'disabled',
             'gddysec_notify_plugin_installed' => 'disabled',
             'gddysec_notify_plugin_updated' => 'disabled',
             'gddysec_notify_post_publication' => 'enabled',
             'gddysec_notify_scan_checksums' => 'disabled',
-            'gddysec_notify_settings_updated' => 'disabled',
+            'gddysec_notify_settings_updated' => 'enabled',
             'gddysec_notify_success_login' => 'enabled',
-            'gddysec_notify_theme_activated' => 'disabled',
+            'gddysec_notify_theme_activated' => 'enabled',
             'gddysec_notify_theme_deleted' => 'disabled',
             'gddysec_notify_theme_editor' => 'enabled',
             'gddysec_notify_theme_installed' => 'disabled',
@@ -88,95 +101,51 @@ class GddysecOption extends GddysecRequest
             'gddysec_notify_website_updated' => 'disabled',
             'gddysec_notify_widget_added' => 'disabled',
             'gddysec_notify_widget_deleted' => 'disabled',
-            'gddysec_parse_errorlogs' => 'enabled',
             'gddysec_plugin_version' => '0.0',
             'gddysec_prettify_mails' => 'disabled',
-            'gddysec_request_timeout' => 5,
             'gddysec_revproxy' => 'disabled',
             'gddysec_runtime' => 0,
-            'gddysec_scan_checksums' => 'enabled',
-            'gddysec_scan_errorlogs' => 'disabled',
-            'gddysec_scan_frequency' => 'twicedaily',
             'gddysec_site_version' => '0.0',
-            'gddysec_sitecheck_counter' => 0,
-            'gddysec_sitecheck_timeout' => 30,
+            'gddysec_sitecheck_target' => '',
+            'gddysec_timezone' => 'UTC+00.00',
             'gddysec_use_wpmail' => 'enabled',
-            'gddysec_xhr_monitor' => 'disabled',
         );
 
         return $defaults;
     }
 
     /**
+     * Name of all valid plugin's options.
+     *
+     * @return array Name of all valid plugin's options.
+     */
+    public static function getDefaultOptionNames()
+    {
+        $options = self::getDefaultOptionValues();
+        $names = array_keys($options);
+
+        return $names;
+    }
+
+    /**
      * Retrieve the default values for some specific options.
      *
-     * @param  string|array $settings Either an array that will be complemented or a string with the name of the option.
-     * @return string|array           The default values for the specified options.
+     * @param  string $option List of options, or single option name.
+     * @return mixed          The default values for the specified options.
      */
-    public static function get_default_options($settings = '')
+    private static function getDefaultOptions($option = '')
     {
-        $default_options = self::get_default_option_values();
+        $default = self::getDefaultOptionValues();
 
         // Use framework built-in function.
         if (function_exists('get_option')) {
             $admin_email = get_option('admin_email');
-            $default_options['gddysec_account'] = $admin_email;
-            $default_options['gddysec_notify_to'] = $admin_email;
+            $default['gddysec_account'] = $admin_email;
+            $default['gddysec_notify_to'] = $admin_email;
+            $default['gddysec_email_subject'] = 'GoDaddy Security Alert, :domain, :event, :remoteaddr';
         }
 
-        if (is_array($settings)) {
-            foreach ($default_options as $option_name => $option_value) {
-                if (!isset($settings[ $option_name ])) {
-                    $settings[ $option_name ] = $option_value;
-                }
-            }
-
-            return $settings;
-        }
-
-        if (is_string($settings)
-            && !empty($settings)
-            && array_key_exists($settings, $default_options)
-        ) {
-            return $default_options[ $settings ];
-        }
-
-        return false;
-    }
-
-    /**
-     * Check if the settings will be stored in the database.
-     *
-     * Since version 1.7.18 the plugin started using plain text files to store
-     * its settings as a security measure to reduce the scope of the attacks
-     * against the database and to simplify the management of the settings for
-     * multisite installations. Some users complained about this and suggested
-     * to create an option to allow them to keep using the database instead of
-     * plain text files.
-     *
-     * We will not add an explicit option in the settings page, but users can go
-     * around this defining a constant in the configuration file named
-     * "GDDYSEC_SETTINGS_IN" with value "database" to force the plugin to store
-     * its settings in the database instead of the plain text files.
-     *
-     * @return boolean True if the settings will be stored in the database.
-     */
-    public static function settingsInDatabase()
-    {
-        return (bool) (
-            defined('GDDYSEC_SETTINGS_IN')
-            && GDDYSEC_SETTINGS_IN === 'database'
-        );
-    }
-
-    /**
-     * Check if the settings will be stored in a plain text file.
-     *
-     * @return boolean True if the settings will be stored in a file.
-     */
-    public static function settingsInTextFile()
-    {
-        return (bool) (self::settingsInDatabase() === false);
+        return @$default[$option];
     }
 
     /**
@@ -192,19 +161,7 @@ class GddysecOption extends GddysecRequest
      */
     public static function optionsFilePath()
     {
-        $content_dir = defined('WP_CONTENT_DIR')
-            ? rtrim(WP_CONTENT_DIR, '/')
-            : ABSPATH . '/wp-content';
-        $folder = $content_dir . '/uploads/' . GDDYSEC;
-
-        if (defined('GDDYSEC_DATA_STORAGE')
-            && file_exists(GDDYSEC_DATA_STORAGE)
-            && is_dir(GDDYSEC_DATA_STORAGE)
-        ) {
-            $folder = GDDYSEC_DATA_STORAGE;
-        }
-
-        return self::fixPath($folder . '/' . GDDYSEC . '-settings.php');
+        return self::dataStorePath(GDDYSEC . '-settings.php');
     }
 
     /**
@@ -221,7 +178,7 @@ class GddysecOption extends GddysecRequest
         $options = array();
         $fpath = self::optionsFilePath();
 
-        /* Use this over GddysecCache to prevent nested function calls */
+        /* Use this over GddysecCache to prevent nested method calls */
         $content = GddysecFileInfo::fileContent($fpath);
 
         if ($content !== false) {
@@ -243,8 +200,8 @@ class GddysecOption extends GddysecRequest
     /**
      * Write new options into the external options file.
      *
-     * @param  array   $options Array with plugins options.
-     * @return boolean          True if the new options were saved, false otherwise.
+     * @param  array $options Array with plugins options.
+     * @return bool           True if the new options were saved, false otherwise.
      */
     public static function writeNewOptions($options = array())
     {
@@ -259,24 +216,25 @@ class GddysecOption extends GddysecRequest
      * Returns data from the settings file or the database.
      *
      * To facilitate the development, you can prefix the name of the key in the
-     * request (when accessing it) with a single colon, this function will
-     * automatically replace that character with the unique identifier of the
-     * plugin.
+     * request (when accessing it) with a single colon, this method will automa-
+     * tically replace that character with the unique identifier of the plugin.
      *
      * NOTE: The GddysecCache library is a better interface to read the
      * content of a configuration file following the same standard in the other
      * files associated to the plugin. However, this library makes use of this
-     * function to retrieve the directory where the files are stored, if we use
+     * method to retrieve the directory where the files are stored, if we use
      * this library for this specific task we will end up provoking a maximum
-     * nesting function call warning.
+     * nesting method call warning.
      *
-     * @param  string $option Name of the setting that will be retrieved.
-     * @return string         Option value, or default value if empty.
+     * @see https://developer.wordpress.org/reference/functions/get_option/
+     *
+     * @param  string $option Name of the option.
+     * @return mixed          Value associated to the option.
      */
-    public static function get_option($option = '')
+    public static function getOption($option = '')
     {
         $options = self::getAllOptions();
-        $option = self::variable_prefix($option);
+        $option = self::varPrefix($option);
 
         if (array_key_exists($option, $options)) {
             return $options[$option];
@@ -295,7 +253,7 @@ class GddysecOption extends GddysecRequest
          * the name starts with the same prefix used by the plugin then we must
          * return the default value defined by the author.
          *
-         * Note that if the plain text file is not writable the function should
+         * Note that if the plain text file is not writable the method should
          * not delete the option from the database to keep backward compatibility
          * with previous installations of the plugin.
          */
@@ -303,8 +261,8 @@ class GddysecOption extends GddysecRequest
             $value = get_option($option);
 
             if ($value !== false) {
-                if (strpos($option, 'gddysec_') === 0) {
-                    $written = self::update_option($option, $value);
+                if (strpos($option, GDDYSEC . '_') === 0) {
+                    $written = self::updateOption($option, $value);
 
                     if ($written === true) {
                         delete_option($option);
@@ -315,8 +273,18 @@ class GddysecOption extends GddysecRequest
             }
         }
 
-        if (strpos($option, 'gddysec_') === 0) {
-            return self::get_default_options($option);
+        /**
+         * Cache default value to stop querying the database.
+         *
+         * The option was not found in the database either, we will return the
+         * data from the array of default values hardcoded in the source code,
+         * then will attempt to write the default value into the flat settings
+         * file to stop querying the database in subsequent requests.
+         */
+        if (strpos($option, GDDYSEC . '_') === 0) {
+            $value = self::getDefaultOptions($option);
+            self::updateOption($option, $value);
+            return $value;
         }
 
         return false;
@@ -325,35 +293,28 @@ class GddysecOption extends GddysecRequest
     /**
      * Update the value of an database' option.
      *
-     * Use the function to update a named option/value pair to the options database
+     * Use the method to update a named option/value pair to the options database
      * table. The option name value is escaped with a special database method before
      * the insert SQL statement but not the option value, this value should always
      * be properly sanitized.
      *
-     * @see https://codex.wordpress.org/Function_Reference/update_option
+     * @see https://developer.wordpress.org/reference/functions/update_option/
      *
-     * @param  string  $option Name of the option to update, must not exceed 64 characters.
-     * @param  string  $value  New value, either an integer, string, array, or object.
-     * @return boolean         True if option value has changed, false otherwise.
+     * @param  string $option Name of the option.
+     * @param  mixed  $value  New value for the option.
+     * @return bool           True if option has been updated, false otherwise.
      */
-    public static function update_option($option = '', $value = '')
+    public static function updateOption($option = '', $value = '')
     {
-        if (strpos($option, ':') === 0 || strpos($option, 'gddysec') === 0) {
+        if (strpos($option, ':') === 0 || strpos($option, GDDYSEC) === 0) {
             $options = self::getAllOptions();
-            $option = self::variable_prefix($option);
+            $option = self::varPrefix($option);
             $options[$option] = $value;
 
-            // Skip if user wants to use the database.
-            if (self::settingsInTextFile() && self::writeNewOptions($options)) {
-                return true;
-            }
+            return self::writeNewOptions($options);
         }
 
-        if (function_exists('update_option')) {
-            return update_option($option, $value);
-        }
-
-        return false;
+        return update_option($option, $value);
     }
 
     /**
@@ -361,16 +322,16 @@ class GddysecOption extends GddysecRequest
      *
      * A safe way of removing a named option/value pair from the options database table.
      *
-     * @see https://codex.wordpress.org/Function_Reference/delete_option
+     * @see https://developer.wordpress.org/reference/functions/delete_option/
      *
-     * @param  string  $option Name of the option to be deleted.
-     * @return boolean         True, if option is successfully deleted. False on failure, or option does not exist.
+     * @param  string $option Name of the option to be deleted.
+     * @return bool           True if option is successfully deleted, false otherwise.
      */
-    public static function delete_option($option = '')
+    public static function deleteOption($option = '')
     {
-        if (strpos($option, ':') === 0 || strpos($option, 'gddysec') === 0) {
+        if (strpos($option, ':') === 0 || strpos($option, GDDYSEC) === 0) {
             $options = self::getAllOptions();
-            $option = self::variable_prefix($option);
+            $option = self::varPrefix($option);
 
             // Create/Modify option's value.
             if (array_key_exists($option, $options)) {
@@ -380,55 +341,51 @@ class GddysecOption extends GddysecRequest
             }
         }
 
-        if (function_exists('delete_option')) {
-            return delete_option($option);
-        }
-
-        return false;
+        return delete_option($option);
     }
 
     /**
      * Check whether a setting is enabled or not.
      *
-     * @param  string  $option Name of the option to be deleted.
-     * @return boolean         True if the option is enabled, false otherwise.
+     * @param  string $option Name of the option to be deleted.
+     * @return bool           True if the option is enabled, false otherwise.
      */
-    public static function is_enabled($option = '')
+    public static function isEnabled($option = '')
     {
-        return (bool) ( self::get_option($option) === 'enabled' );
+        return (bool) (self::getOption($option) === 'enabled');
     }
 
     /**
      * Check whether a setting is disabled or not.
      *
-     * @param  string  $option Name of the option to be deleted.
-     * @return boolean         True if the option is disabled, false otherwise.
+     * @param  string $option Name of the option to be deleted.
+     * @return bool           True if the option is disabled, false otherwise.
      */
-    public static function is_disabled($option = '')
+    public static function isDisabled($option = '')
     {
-        return (bool) ( self::get_option($option) === 'disabled' );
+        return (bool) (self::getOption($option) === 'disabled');
     }
 
     /**
      * Retrieve all the options stored by Wordpress in the database. The options
-     * containing the word "transient" are excluded from the results, this function
-     * is compatible with multisite instances.
+     * containing the word "transient" are excluded from the results, this method
+     * compatible with multisite instances.
      *
-     * @return array All the options stored by Wordpress in the database, except the transient options.
+     * @return array All the options stored by Wordpress in the database.
      */
-    public static function get_site_options()
+    private static function getSiteOptions()
     {
-        global $wpdb;
-
         $settings = array();
-        $results = $wpdb->get_results(
-            "SELECT * FROM {$wpdb->options}
-            WHERE option_name NOT LIKE '%_transient_%'
-            ORDER BY option_id ASC"
-        );
 
-        foreach ($results as $row) {
-            $settings[ $row->option_name ] = $row->option_value;
+        if (array_key_exists('wpdb', $GLOBALS)) {
+            $results = $GLOBALS['wpdb']->get_results(
+                'SELECT * FROM ' . $GLOBALS['wpdb']->options . ' WHERE opti'
+                . 'on_name NOT LIKE "%_transient_%" ORDER BY option_id ASC'
+            );
+
+            foreach ($results as $row) {
+                $settings[$row->option_name] = $row->option_value;
+            }
         }
 
         $external = self::getAllOptions();
@@ -447,14 +404,14 @@ class GddysecOption extends GddysecRequest
      * @param  array $request The content of the global variable GET or POST considering SERVER[REQUEST_METHOD].
      * @return array          A list of all the options that were changes through this request.
      */
-    public static function what_options_were_changed($request = array())
+    public static function whatOptionsWereChanged($request = array())
     {
         $options_changed = array(
             'original' => array(),
             'changed' => array()
         );
 
-        $site_options = self::get_site_options();
+        $site_options = self::getSiteOptions();
 
         foreach ($request as $req_name => $req_value) {
             if (array_key_exists($req_name, $site_options)
@@ -471,57 +428,140 @@ class GddysecOption extends GddysecRequest
     /**
      * Check the nonce comming from any of the settings pages.
      *
-     * @return boolean TRUE if the nonce is valid, FALSE otherwise.
+     * @return bool True if the nonce is valid, false otherwise.
      */
-    public static function check_options_nonce()
+    public static function checkOptionsNonce()
     {
         // Create the option_page value if permalink submission.
-        if (!isset($_POST['option_page'])
-            && isset($_POST['permalink_structure'])
-        ) {
+        if (!isset($_POST['option_page']) && isset($_POST['permalink_structure'])) {
             $_POST['option_page'] = 'permalink';
         }
 
-        // Check if the option_page has an allowed value.
-        if ($option_page = GddysecRequest::post('option_page')) {
-            $nonce = '_wpnonce';
-            $action = '';
+        /* check if the option_page has an allowed value */
+        $option_page = GddysecRequest::post('option_page');
 
-            switch ($option_page) {
-                case 'general':    /* no_break */
-                case 'writing':    /* no_break */
-                case 'reading':    /* no_break */
-                case 'discussion': /* no_break */
-                case 'media':      /* no_break */
-                case 'options':    /* no_break */
-                    $action = $option_page . '-options';
-                    break;
-                case 'permalink':
-                    $action = 'update-permalink';
-                    break;
-            }
-
-            // Check the nonce validity.
-            if (!empty($action)
-                && isset($_REQUEST[ $nonce ])
-                && wp_verify_nonce($_REQUEST[ $nonce ], $action)
-            ) {
-                return true;
-            }
+        if (!$option_page) {
+            return false;
         }
 
-        return false;
+        $action = '';
+        $nonce = '_wpnonce';
+
+        switch ($option_page) {
+            case 'general':    /* no_break */
+            case 'writing':    /* no_break */
+            case 'reading':    /* no_break */
+            case 'discussion': /* no_break */
+            case 'media':      /* no_break */
+            case 'options':    /* no_break */
+                $action = $option_page . '-options';
+                break;
+            case 'permalink':
+                $action = 'update-permalink';
+                break;
+        }
+
+        /* check the nonce validity */
+        return (bool) (
+            !empty($action)
+            && isset($_REQUEST[$nonce])
+            && wp_verify_nonce($_REQUEST[$nonce], $action)
+        );
     }
 
     /**
-     * Get a list of the post types ignored to receive email notifications when the
+     * Returns a list of post-types.
+     *
+     * The list of post-types includes objects such as Post and Page but also
+     * the transitions between each post type, for example, if there are posts
+     * of type Draft and they change to Trash, this function will include a new
+     * post type called "from_draft_to_trash" and so on.
+     *
+     * @return array List of post-types with transitions.
+     */
+    public static function getPostTypes()
+    {
+        $postTypes = get_post_types();
+        $transitions = array(
+            'new',
+            'publish',
+            'pending',
+            'draft',
+            'auto-draft',
+            'future',
+            'private',
+            'inherit',
+            'trash',
+        );
+
+        /* include post-type transitions */
+        foreach ($transitions as $from) {
+            foreach ($transitions as $to) {
+                if ($from === $to) {
+                    continue;
+                }
+
+                $event = sprintf('from_%s_to_%s', $from, $to);
+
+                if (!array_key_exists($event, $postTypes)) {
+                    $postTypes[$event] = $event;
+                }
+            }
+        }
+
+        /* include custom non-registered post-types */
+        $ignoredEvents = GddysecOption::getIgnoredEvents();
+        foreach ($ignoredEvents as $event => $time) {
+            if (!array_key_exists($event, $postTypes)) {
+                $postTypes[$event] = $event;
+            }
+        }
+
+        return $postTypes;
+    }
+
+    /**
+     * Check whether an event is being ignored to send alerts or not.
+     *
+     * @param  string $event Unique post-type name.
+     * @return bool          Whether an event is being ignored or not.
+     */
+    public static function isIgnoredEvent($event = '')
+    {
+        $event = strtolower($event);
+        $ignored = self::getIgnoredEvents();
+
+        return array_key_exists($event, $ignored);
+    }
+
+    /**
+     * Add a new post type to the list of ignored events to send alerts.
+     *
+     * @param  string $event_name Unique post-type name.
+     * @return bool               Whether the event was ignored or not.
+     */
+    public static function addIgnoredEvent($event_name = '')
+    {
+        $ignored = self::getIgnoredEvents();
+
+        if (array_key_exists($event_name, $ignored)) {
+            return false; /* skip if the post-type was already ignored */
+        }
+
+        $ignored[$event_name] = time(); /* add post-type to the list */
+
+        return self::updateOption(':ignored_events', @json_encode($ignored));
+    }
+
+    /**
+     * Get a list of the post types ignored to receive email alerts when the
      * "new site content" hook is triggered.
      *
-     * @return array List of ignored posts-types to send notifications.
+     * @return array List of ignored posts-types to send alerts.
      */
     public static function getIgnoredEvents()
     {
-        $post_types = self::get_option(':ignored_events');
+        $post_types = self::getOption(':ignored_events');
         $post_types_arr = false;
 
         if (is_string($post_types)) {
@@ -536,66 +576,95 @@ class GddysecOption extends GddysecRequest
     }
 
     /**
-     * Add a new post type to the list of ignored events to send notifications.
+     * Remove a post type from the list of ignored events to send alerts.
      *
-     * @param  string  $event_name Unique post-type name.
-     * @return boolean             Whether the event was ignored or not.
-     */
-    public static function addIgnoredEvent($event_name = '')
-    {
-        if (function_exists('get_post_types')) {
-            $post_types = get_post_types();
-
-            // Check if the event is a registered post-type.
-            if (array_key_exists($event_name, $post_types)) {
-                $ignored_events = self::getIgnoredEvents();
-
-                // Check if the event is not ignored already.
-                if (!array_key_exists($event_name, $ignored_events)) {
-                    $ignored_events[ $event_name ] = time();
-                    $saved = self::update_option(':ignored_events', json_encode($ignored_events));
-
-                    return $saved;
-                }
-            }
-        }
-
-        return false;
-    }
-
-    /**
-     * Remove a post type from the list of ignored events to send notifications.
-     *
-     * @param  string  $event Unique post-type name.
-     * @return boolean        Whether the event was removed from the list or not.
+     * @param  string $event Unique post-type name.
+     * @return bool          Whether the event was removed from the list or not.
      */
     public static function removeIgnoredEvent($event = '')
     {
         $ignored = self::getIgnoredEvents();
 
-        if (array_key_exists($event, $ignored)) {
-            unset($ignored[$event]);
-
-            return self::update_option(
-                ':ignored_events',
-                @json_encode($ignored)
-            );
+        if (!array_key_exists($event, $ignored)) {
+            return false;
         }
 
-        return false;
+        unset($ignored[$event]); /* remove post-type from the list */
+
+        return self::updateOption(':ignored_events', @json_encode($ignored));
     }
 
     /**
-     * Check whether an event is being ignored to send notifications or not.
+     * Change the reverse proxy setting.
      *
-     * @param  string  $event Unique post-type name.
-     * @return boolean        Whether an event is being ignored or not.
+     * When enabled this option forces the plugin to override the value of the
+     * global IP address variable from the HTTP header selected by the user from
+     * the settings. Note that this may also be automatically enabled when the
+     * firewall page is activated as it assumes that the proxy is creating a
+     * custom HTTP header for the real IP.
+     *
+     * @param  string $action Enable or disable the reverse proxy.
+     * @param  bool   $silent Hide admin notices on success.
+     * @return void
      */
-    public static function isIgnoredEvent($event = '')
+    public static function setRevProxy($action = 'disable', $silent = false)
     {
-        $event = strtolower($event);
-        $ignored = self::getIgnoredEvents();
+        if ($action !== 'enable' && $action !== 'disable') {
+            return self::deleteOption(':revproxy');
+        }
 
-        return array_key_exists($event, $ignored);
+        $action_d = $action . 'd';
+        $message = 'Reverse proxy support was <code>' . $action_d . '</code>';
+
+        self::updateOption(':revproxy', $action_d);
+
+        GddysecEvent::reportInfoEvent($message);
+        GddysecEvent::notifyEvent('plugin_change', $message);
+
+        if ($silent) {
+            return true;
+        }
+
+        return GddysecInterface::info(
+            sprintf(
+                'Reverse proxy support was set to <b>%s</b>',
+                $action_d /* either enabled or disabled */
+            )
+        );
+    }
+
+    /**
+     * Change the HTTP header to retrieve the real IP address.
+     *
+     * @param  string $header Valid HTTP header name.
+     * @param  bool   $silent Hide admin notices on success.
+     * @return void
+     */
+    public static function setAddrHeader($header = 'REMOTE_ADDR', $silent = false)
+    {
+        $header = strtoupper($header);
+        $allowed = Gddysec::allowedHttpHeaders(true);
+
+        if (!array_key_exists($header, $allowed)) {
+            return GddysecInterface::error('HTTP header is not allowed');
+        }
+
+        $message = sprintf('HTTP header was set to %s', $header);
+
+        self::updateOption(':addr_header', $header);
+
+        GddysecEvent::reportInfoEvent($message);
+        GddysecEvent::notifyEvent('plugin_change', $message);
+
+        if ($silent) {
+            return true;
+        }
+
+        return GddysecInterface::info(
+            sprintf(
+                'HTTP header was set to <code>%s</code>',
+                $header /* one of the allowed HTTP headers */
+            )
+        );
     }
 }

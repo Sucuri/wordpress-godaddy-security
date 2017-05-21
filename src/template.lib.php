@@ -1,5 +1,19 @@
 <?php
 
+/**
+ * Code related to the template.lib.php interface.
+ *
+ * PHP version 5
+ *
+ * @category   Library
+ * @package    GoDaddy
+ * @subpackage GoDaddySecurity
+ * @author     Daniel Cid <dcid@sucuri.net>
+ * @copyright  2017 Sucuri Inc. - GoDaddy LLC.
+ * @license    https://www.godaddy.com/ - Proprietary
+ * @link       https://wordpress.org/plugins/godaddy-security
+ */
+
 if (!defined('GDDYSEC_INIT') || GDDYSEC_INIT !== true) {
     if (!headers_sent()) {
         /* Report invalid access if possible. */
@@ -20,11 +34,21 @@ if (!defined('GDDYSEC_INIT') || GDDYSEC_INIT !== true) {
  * Web templates can be used like the template of a form letter to either
  * generate a large number of "static" (unchanging) web pages in advance, or to
  * produce "dynamic" web pages on demand.
+ *
+ * @category   Library
+ * @package    GoDaddy
+ * @subpackage GoDaddySecurity
+ * @author     Daniel Cid <dcid@sucuri.net>
+ * @copyright  2017 Sucuri Inc. - GoDaddy LLC.
+ * @license    https://www.godaddy.com/ - Proprietary
+ * @link       https://wordpress.org/plugins/godaddy-security
  */
 class GddysecTemplate extends GddysecRequest
 {
     /**
      * Replace all pseudo-variables from a string of characters.
+     *
+     * @see http://php.net/manual/en/function.gettype.php
      *
      * @param  string $content The content of a template file which contains pseudo-variables.
      * @param  array  $params  List of pseudo-variables that will be replaced in the template.
@@ -32,20 +56,28 @@ class GddysecTemplate extends GddysecRequest
      */
     private static function replacePseudoVars($content = '', $params = array())
     {
-        if (!is_array($params)) {
-            return false;
-        }
+        $params = is_array($params) ? $params : array();
 
         foreach ($params as $keyname => $kvalue) {
             $tplkey = 'GDDYSEC.' . $keyname;
             $with_escape = '%%' . $tplkey . '%%';
             $wout_escape = '%%%' . $tplkey . '%%%';
 
+            if (is_bool($kvalue)) {
+                $kvalue = ($kvalue === true) ? 'True' : 'False';
+            } elseif (!is_string($kvalue) && !is_numeric($kvalue)) {
+                $kvalue = gettype($kvalue);
+            }
+
             if (strpos($content, $wout_escape) !== false) {
                 $content = str_replace($wout_escape, $kvalue, $content);
-            } elseif (strpos($content, $with_escape) !== false) {
+                continue;
+            }
+
+            if (strpos($content, $with_escape) !== false) {
                 $kvalue = Gddysec::escape($kvalue);
                 $content = str_replace($with_escape, $kvalue, $content);
+                continue;
             }
         }
 
@@ -66,47 +98,40 @@ class GddysecTemplate extends GddysecRequest
         // Base parameters, required to render all the pages.
         $params = self::linksAndNavbar($params);
 
-        // Check the existence of the API key.
-        $apiKeyExists = GddysecAPI::getPluginKey();
-
         // Global parameters, used through out all the pages.
-        $params['NavigationBar'] = '' /* initialize empty */;
-        $params['Year'] = date('Y'); /* Current year for copyright */
-        $params['PageTitle'] = isset($params['PageTitle']) ? '('.$params['PageTitle'].')' : '';
+        $params['GenerateAPIKey.Modal'] = '';
+        $params['GenerateAPIKey.Visibility'] = 'hidden';
         $params['PageNonce'] = wp_create_nonce('gddysec_page_nonce');
-        $params['PageStyleClass'] = isset($params['PageStyleClass']) ? $params['PageStyleClass'] : 'base';
-        $params['CleanDomain'] = self::get_domain();
+        $params['WordPressVersion'] = self::siteVersion();
+        $params['PluginVersion'] = GDDYSEC_VERSION;
+        $params['CleanDomain'] = self::getDomain();
+        $params['Year'] = date('Y');
 
-        // Add buttons to the header.
-        if ($target === 'base') {
-            $params['GenerateAPIKey'] = $apiKeyExists ? 'hidden' : 'visible';
-            $params['NavigationBar'] = GddysecTemplate::getSection('navbar', $params);
+        if (!array_key_exists('PageStyleClass', $params)) {
+            $params['PageStyleClass'] = 'base';
         }
 
-        // Check if API key is available, display button otherwise.
-        if (!$apiKeyExists) {
-            // Get a list of admin users for the API key generation.
-            if ($target === 'modal') {
-                $admin_users = Gddysec::get_users_for_api_key();
-                $params['AdminEmails'] = self::selectOptions($admin_users);
-            }
+        if ($target === 'base'
+            && current_user_can('manage_options')
+            && !GddysecAPI::getPluginKey()
+        ) {
+            $params['GenerateAPIKey.Visibility'] = 'visible';
+            $params['GenerateAPIKey.Modal'] = /* register-site */
 
-            /**
-             * Prevent infinite nested loop.
-             *
-             * Generate the HTML code for the API Key Generator once, when the
-             * template is "base", this is to prevent an infinite loop as the
-             * functions that are being called here depend on the parent method.
-             *
-             * @var boolean
-             */
-            if ($target === 'base') {
-                $params['NavigationBar'] .= GddysecTemplate::getModal('setup-form', array(
-                    'Visibility' => 'hidden',
+            GddysecTemplate::getModal(
+                'register-site',
+                array(
                     'Title' => 'Generate API Key',
-                    'CssClass' => 'gddysec-setup-instructions',
-                ));
-            }
+                    'Identifier' => 'register-site',
+                    'Visibility' => 'hidden',
+                )
+            );
+        }
+
+        // Get a list of admin users for the API key generation.
+        if ($target === 'modal' && !GddysecAPI::getPluginKey()) {
+            $admin_users = Gddysec::getUsersForAPIKey();
+            $params['AdminEmails'] = self::selectOptions($admin_users);
         }
 
         return $params;
@@ -115,8 +140,8 @@ class GddysecTemplate extends GddysecRequest
     /**
      * Return a string indicating the visibility of a HTML component.
      *
-     * @param  boolean $visible Whether the condition executed returned a positive value or not.
-     * @return string           A string indicating the visibility of a HTML component.
+     * @param  bool $visible Whether the condition executed returned a positive value or not.
+     * @return string        A string indicating the visibility of a HTML component.
      */
     public static function visibility($visible = false)
     {
@@ -124,35 +149,34 @@ class GddysecTemplate extends GddysecRequest
     }
 
     /**
-     * Generate an URL pointing to the page indicated in the function and that must
+     * Generate an URL pointing to the page indicated in the method and that must
      * be loaded through the administrator panel.
      *
-     * @param  string  $page Short name of the page that will be generated.
-     * @param  boolean $ajax True if the URL should point to the Ajax handler.
-     * @return string        Full string containing the link of the page.
+     * @param  string $page Short name of the page that will be generated.
+     * @param  bool   $ajax True if the URL should point to the Ajax handler.
+     * @return string       Full string containing the link of the page.
      */
     public static function getUrl($page = '', $ajax = false)
     {
         $suffix = ($ajax === true) ? 'admin-ajax' : 'admin';
-        $url_path = Gddysec::admin_url($suffix . '.php?page=gddysec');
+        $url_path = Gddysec::adminURL($suffix . '.php?page=gddysec');
 
         if (!empty($page)) {
             $url_path .= '_' . strtolower($page);
         }
 
-        if (Gddysec::is_multisite()) {
-            $url_path = str_replace(
-                'wp-admin/network/admin-ajax.php',
-                'wp-admin/admin-ajax.php',
-                $url_path
-            );
-        }
+        /* convert URL to multisite format */
+        $networkURL = str_replace(
+            'wp-admin/network/admin-ajax.php',
+            'wp-admin/admin-ajax.php',
+            $url_path
+        );
 
-        return $url_path;
+        return Gddysec::isMultiSite() ? $networkURL : $url_path;
     }
 
     /**
-     * Generate an URL pointing to the page indicated in the function and that must
+     * Generate an URL pointing to the page indicated in the method and that must
      * be loaded through the Ajax handler of the administrator panel.
      *
      * @param  string $page Short name of the page that will be generated.
@@ -168,23 +192,32 @@ class GddysecTemplate extends GddysecRequest
      * template files, this will also generate the navigation bar and detect which
      * items in it are selected by the current page.
      *
-     * @param  array  $params Key-value array with pseudo-variables shared with the template.
-     * @return array          A complementary list of pseudo-variables for the template files.
+     * @param  array $params Key-value array with pseudo-variables shared with the template.
+     * @return array         A complementary list of pseudo-variables for the template files.
      */
     private static function linksAndNavbar($params = array())
     {
+        $pages = gddysecMainPages();
         $params = is_array($params) ? $params : array();
+        $sub_pages = is_array($pages) ? $pages : array();
 
-        $params['CurrentPageFunc'] = '';
+        foreach ($sub_pages as $sub_page_func => $sub_page_title) {
+            $func_parts = explode('_', $sub_page_func, 2);
 
-        if ($_page = self::get('page', '_page')) {
-            $params['CurrentPageFunc'] = $_page;
+            if (isset($func_parts[1])) {
+                $unique_name = $func_parts[1];
+                $pseudo_var = 'URL.' . ucwords($unique_name);
+            } else {
+                $unique_name = '';
+                $pseudo_var = 'URL.Dashboard';
+            }
+
+            $params[$pseudo_var] = self::getUrl($unique_name);
+
+            // Copy URL variable and create an Ajax handler.
+            $pseudo_var_ajax = 'Ajax' . $pseudo_var;
+            $params[$pseudo_var_ajax] = self::getAjaxUrl($unique_name);
         }
-
-        $params['URL.Home'] = self::getUrl();
-        $params['URL.Settings'] = self::getUrl('settings');
-        $params['AjaxURL.Home'] = self::getAjaxUrl();
-        $params['AjaxURL.Settings'] = self::getAjaxUrl('settings');
 
         return $params;
     }
@@ -203,7 +236,6 @@ class GddysecTemplate extends GddysecRequest
         $params = is_array($params) ? $params : array();
 
         $params = self::sharedParams('base', $params);
-
         $params['PageContent'] = $html;
 
         return self::getTemplate('base', $params);
@@ -214,60 +246,50 @@ class GddysecTemplate extends GddysecRequest
      * by the dynamic variables provided by the developer through one of the parameters
      * of the function.
      *
-     * @param  string  $template Filename of the template that will be used to generate the page.
-     * @param  array   $params   Key-value array with pseudo-variables shared with the template.
-     * @param  boolean $type     Template type; either page, section or snippet.
-     * @return string            Formatted HTML code after pseudo-variables replacement.
+     * @param  string $template Filename of the template that will be used to generate the page.
+     * @param  array  $params   Key-value array with pseudo-variables shared with the template.
+     * @param  string $type     Template type; either page, section or snippet.
+     * @return string           Formatted HTML code after pseudo-variables replacement.
      */
     public static function getTemplate($template = '', $params = array(), $type = 'page')
     {
-        if (!is_array($params)) {
-            $params = array();
+        $params = is_array($params) ? $params : array();
+
+        $filenames = array(
+            'page' => '%s/inc/tpl/%s.html.tpl',
+            'section' => '%s/inc/tpl/%s.html.tpl',
+            'snippet' => '%s/inc/tpl/%s.snippet.tpl',
+        );
+
+        if (!array_key_exists($type, $filenames)) {
+            return (string) Gddysec::throwException('Invalid template type');
         }
 
-        if ($type == 'page' || $type == 'section') {
-            $fpath_pattern = '%s/%s/inc/tpl/%s.html.tpl';
-        } elseif ($type == 'snippet') {
-            $fpath_pattern = '%s/%s/inc/tpl/%s.snippet.tpl';
-        } else {
-            $fpath_pattern = null;
+        $output = ''; /* initialize response */
+        $_page = self::get('page', '_page');
+        $params['PluginURL'] = GDDYSEC_URL;
+        $trailing = $_page ? 'admin.php?page=' . $_page : '';
+        $params['CurrentURL'] = Gddysec::adminURL($trailing);
+
+        /* load raw content from the specified template file */
+        $fpath = sprintf($filenames[$type], GDDYSEC_PLUGIN_PATH, $template);
+        $output = GddysecFileInfo::fileContent($fpath);
+
+        /* replace the global pseudo-variables in the section/snippets templates. */
+        if ($template == 'base'
+            && array_key_exists('PageContent', $params)
+            && strpos($params['PageContent'], '%%GDDYSEC.') !== false
+        ) {
+            $params['PageContent'] = self::replacePseudoVars($params['PageContent'], $params);
         }
 
-        if ($fpath_pattern !== null) {
-            $output = '';
-            $fpath = sprintf($fpath_pattern, WP_PLUGIN_DIR, GDDYSEC_PLUGIN_FOLDER, $template);
+        $output = self::replacePseudoVars($output, $params);
 
-            if (file_exists($fpath) && is_readable($fpath)) {
-                $output = @file_get_contents($fpath);
-
-                $params['PluginURL'] = GDDYSEC_URL;
-
-                // Detect the current page URL.
-                if ($_page = self::get('page', '_page')) {
-                    $params['CurrentURL'] = Gddysec::admin_url('admin.php?page=' . $_page);
-                } else {
-                    $params['CurrentURL'] = Gddysec::admin_url();
-                }
-
-                // Replace the global pseudo-variables in the section/snippets templates.
-                if ($template == 'base'
-                    && array_key_exists('PageContent', $params)
-                    && @preg_match('/%%GDDYSEC\.(.+)%%/', $params['PageContent'])
-                ) {
-                    $params['PageContent'] = self::replacePseudoVars($params['PageContent'], $params);
-                }
-
-                $output = self::replacePseudoVars($output, $params);
-            }
-
-            if ($template == 'base' || $type != 'page') {
-                return $output;
-            }
-
-            return self::getBaseTemplate($output, $params);
+        if ($template == 'base' || $type != 'page') {
+            return $output;
         }
 
-        return '';
+        return self::getBaseTemplate($output, $params);
     }
 
     /**
@@ -302,15 +324,17 @@ class GddysecTemplate extends GddysecRequest
             'Visibility' => 'visible',
             'Identifier' => 'foobar',
             'CssClass' => '',
-            'Content' => '<p>Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do
-                eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim
-                veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo
-                consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse
-                cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non
-                proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>',
+            'Content' => '<p>Lorem ipsum dolor sit amet, consectetur adipisici'
+            . 'ng elit, sed do eiusmod tempor incididunt ut labore et dolore m'
+            . 'agna aliqua. Ut enim ad minim veniam, quis nostrud exercitation'
+            . ' ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis '
+            . 'aute irure dolor in reprehenderit in voluptate velit esse cillu'
+            . 'm dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupi'
+            . 'datat non proident, sunt in culpa qui officia deserunt mollit a'
+            . 'nim id est laborum.</p>',
         );
 
-        if (!empty($template) && $template != 'none') {
+        if (!empty($template) && $template !== 'none') {
             $params['Content'] = self::getSection($template);
         }
 
@@ -320,8 +344,8 @@ class GddysecTemplate extends GddysecRequest
             }
         }
 
-        $params['Visibility'] = 'gddysec-' . $params['Visibility'];
-        $params['Identifier'] = 'gddysec-' . $template . '-modal';
+        $params['Visibility'] = GDDYSEC . '-' . $params['Visibility'];
+        $params['Identifier'] = GDDYSEC . '-' . $params['Identifier'] . '-modal';
         $params = self::sharedParams('modal', $params);
 
         return self::getTemplate('modalwindow', $params, 'section');
@@ -338,25 +362,33 @@ class GddysecTemplate extends GddysecRequest
      */
     public static function getSnippet($template = '', $params = array())
     {
+        $params = self::sharedParams('snippet', $params);
+
         return self::getTemplate($template, $params, 'snippet');
     }
 
     /**
      * Generate the HTML code necessary to render a list of options in a form.
      *
-     * @param  array  $allowed_values List with keys and values allowed for the options.
-     * @param  string $selected_val   Value of the option that will be selected by default.
-     * @return string                 Option list for a select form field.
+     * @param  array      $allowed  Key-value array with allowed options.
+     * @param  string|int $selected Optional selected value from the list.
+     * @return string               HTML code for the select box.
      */
-    public static function selectOptions($allowed_values = array(), $selected_val = '')
+    public static function selectOptions($allowed = array(), $selected = '')
     {
         $options = '';
 
-        foreach ($allowed_values as $option_name => $option_label) {
+        foreach ((array) $allowed as $option_name => $option_label) {
+            $selectedAttr = '';
+
+            if ($option_name === $selected) {
+                $selectedAttr = "\x20selected=\"selected\"";
+            }
+
             $options .= sprintf(
-                "<option %s value='%s'>%s</option>\n",
-                ($option_name === $selected_val ? 'selected="selected"' : ''),
+                "<option value=\"%s\"%s>%s</option>\n",
                 Gddysec::escape($option_name),
+                $selectedAttr, /* do not escape HTML */
                 Gddysec::escape($option_label)
             );
         }
@@ -367,7 +399,7 @@ class GddysecTemplate extends GddysecRequest
     /**
      * Detect which number in a pagination was clicked.
      *
-     * @return integer Page number of the link clicked in a pagination.
+     * @return int Page number of the link clicked in a pagination.
      */
     public static function pageNumber()
     {
@@ -379,27 +411,43 @@ class GddysecTemplate extends GddysecRequest
     /**
      * Generate the HTML code to display a pagination.
      *
-     * @param  string  $base_url     Base URL for the links before the page number.
-     * @param  integer $total_items  Total quantity of items retrieved from a query.
-     * @param  integer $max_per_page Maximum number of items that will be shown per page.
-     * @return string                HTML code for a pagination generated using the provided data.
+     * @param  string $base_url     Base URL for the links before the page number.
+     * @param  int    $total_items  Total quantity of items retrieved from a query.
+     * @param  int    $max_per_page Maximum number of items that will be shown per page.
+     * @return string               HTML code for a pagination generated using the provided data.
      */
     public static function pagination($base_url = '', $total_items = 0, $max_per_page = 1)
     {
-        // Calculate the number of links for the pagination.
+        /* calculate the number of links for the pagination */
         $html_links = '';
         $page_number = self::pageNumber();
         $max_pages = ceil($total_items / $max_per_page);
+        $final_page = $max_pages;
+        $start_page = 1;
         $extra_url = '';
 
-        // Fix for inline anchor URLs.
-        if (@preg_match('/^(.+)(#.+)$/', $base_url, $match)) {
-            $base_url = $match[1];
-            $extra_url = $match[2];
+        /* fix for inline anchor URLs */
+        $offset = strpos($base_url, '#');
+
+        if ($offset !== false) {
+            $clean_url = substr($base_url, 0, $offset);
+            $extra_url = substr($base_url, $offset);
+            $base_url = $clean_url;
         }
 
-        // Generate the HTML links for the pagination.
-        for ($j = 1; $j <= $max_pages; $j++) {
+        /* keep the number of pagination buttons at limit */
+        if ($max_pages > GDDYSEC_MAX_PAGINATION_BUTTONS) {
+            $final_page = GDDYSEC_MAX_PAGINATION_BUTTONS;
+            $middle = $final_page / 2; /* middle point */
+
+            if ($page_number > $middle) {
+                $start_page = $page_number - ($middle - 1);
+                $final_page = $page_number + $middle;
+            }
+        }
+
+        /* generate the HTML links for the pagination */
+        for ($j = $start_page; $j <= $final_page; $j++) {
             $link_class = 'gddysec-pagination-link';
 
             if ($page_number == $j) {
