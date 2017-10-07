@@ -1,17 +1,16 @@
 
 <tr>
-    <td><em class="gddysec-monospace">%%GDDYSEC.IgnoreRules.WasIgnoredAt%%</em></td>
+    <th class="check-column">
+        <input type="checkbox" name="gddysec_posttypes[]" %%GDDYSEC.PostTypes.Selected%% value="%%GDDYSEC.PostTypes.UniqueID%%" />
+    </th>
 
-    <td><span class="gddysec-label-%%GDDYSEC.IgnoreRules.IsIgnoredClass%%">%%GDDYSEC.IgnoreRules.IsIgnored%%</span></td>
+    <td>%%GDDYSEC.PostTypes.Title%%</td>
 
-    <td>%%GDDYSEC.IgnoreRules.PostTypeTitle%%</td>
+    <td>
+        <span class="gddysec-monospace">%%GDDYSEC.PostTypes.UniqueID%%</span>
+    </td>
 
-    <td class="td-with-button">
-        <form action="%%GDDYSEC.URL.Settings%%#alerts" method="post">
-            <input type="hidden" name="gddysec_page_nonce" value="%%GDDYSEC.PageNonce%%" />
-            <input type="hidden" name="gddysec_ignorerule" value="%%GDDYSEC.IgnoreRules.PostType%%" />
-            <input type="hidden" name="gddysec_ignorerule_action" value="%%GDDYSEC.IgnoreRules.Action%%" />
-            <button type="submit" class="button button-secondary">%%GDDYSEC.IgnoreRules.ButtonText%%</button>
-        </form>
+    <td>
+        <em class="gddysec-monospace">%%GDDYSEC.PostTypes.IgnoredAt%%</em>
     </td>
 </tr>

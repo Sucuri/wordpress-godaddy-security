@@ -15,6 +15,8 @@
 
             %%%GDDYSEC.Settings.Alerts.IgnorePosts%%%
 
+            %%%GDDYSEC.Settings.Scanner.IntegrityCache%%%
+
             %%%GDDYSEC.Settings.General.Timezone%%%
 
             %%%GDDYSEC.Settings.General.ImportExport%%%
@@ -44,8 +46,6 @@
             %%%GDDYSEC.Settings.APIService.Checksums%%%
 
             %%%GDDYSEC.Settings.Scanner.Cronjobs%%%
-
-            %%%GDDYSEC.Settings.Scanner.IntegrityCache%%%
 
             %%%GDDYSEC.Settings.Scanner.IgnoreFolders%%%
         </div>

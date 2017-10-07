@@ -22,7 +22,7 @@
         });
         </script>
 
-        <form action="%%GDDYSEC.URL.Settings%%#scanner" method="post">
+        <form action="%%GDDYSEC.URL.Settings%%#advanced" method="post">
             <input type="hidden" name="gddysec_page_nonce" value="%%GDDYSEC.PageNonce%%" />
             <input type="hidden" name="gddysec_ignorescanning_action" value="ignore" />
 
@@ -35,7 +35,7 @@
 
         <hr>
 
-        <form action="%%GDDYSEC.URL.Settings%%#scanner" method="post">
+        <form action="%%GDDYSEC.URL.Settings%%#advanced" method="post">
             <input type="hidden" name="gddysec_page_nonce" value="%%GDDYSEC.PageNonce%%" />
 
             <table class="wp-list-table widefat gddysec-table gddysec-ignorescanning">

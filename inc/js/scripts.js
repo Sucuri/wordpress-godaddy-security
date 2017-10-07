@@ -1,29 +1,35 @@
 /* global jQuery */
-/* jshint unused:false */
 
-function gddysecAlertClose (id) {
+/* jshint ignore:start */
+function gddysecAlertClose(id) {
     var element = document.getElementById('gddysec-alert-' + id);
     element.parentNode.removeChild(element);
 }
+/* jshint ignore:end */
 
-jQuery(document).ready(function ($) {
-    $('.gddysec-container').on('click', '.gddysec-modal-button', function (event) {
+jQuery(document).ready(function($) {
+    $('.gddysec-container').on('click', '.gddysec-modal-button', function(event) {
         event.preventDefault();
+
         var modalid = $(this).data('modalid');
+
         $('div.' + modalid + '-modal').removeClass('gddysec-hidden');
     });
 
-    $('.gddysec-container').on('click', '.gddysec-overlay, .gddysec-modal-close', function (event) {
+    $('.gddysec-container').on('click', '.gddysec-overlay, .gddysec-modal-close', function(event) {
         event.preventDefault();
+
         $('.gddysec-overlay').addClass('gddysec-hidden');
         $('.gddysec-modal').addClass('gddysec-hidden');
     });
 
-    $('.gddysec-container').on('click', '.gddysec-show-more', function (event) {
+    $('.gddysec-container').on('click', '.gddysec-show-more', function(event) {
         event.preventDefault();
+
         var button = $(this);
         var target = button.attr('data-target');
         var status = button.attr('data-status');
+
         if (status === 'more') {
             button.attr('data-status', 'less');
             $(target).removeClass('gddysec-hidden');
@@ -41,36 +47,44 @@ jQuery(document).ready(function ($) {
         var activeState = 'gddysec-tab-active';
         var locationHash = location.href.split('#')[1];
 
-        $('.gddysec-container').on('click', '.gddysec-tabs-buttons a', function (event) {
+        $('.gddysec-container').on('click', '.gddysec-tabs-buttons a', function(event) {
             event.preventDefault();
 
             var button = $(this);
             var uniqueid = button.attr('href').split('#')[1];
 
-            if (uniqueid !== undefined) {
-                var container = $('.gddysec-tabs-containers > #gddysec-tabs-' + uniqueid);
-
-                if (container.length) {
-                    var rawurl = location.href.replace(location.hash, '');
-                    var newurl = rawurl + '#' + uniqueid;
-
-                    window.history.pushState({}, document.title, newurl);
-
-                    $('.gddysec-tabs-buttons a').removeClass(activeState);
-                    $('.gddysec-tabs-containers > div').addClass(hiddenState);
-
-                    button.addClass(activeState);
-                    container.addClass(visibleState);
-                    container.removeClass(hiddenState);
-                }
+            if (!uniqueid) {
+                return;
             }
+
+            var container = $('.gddysec-tabs-containers > #gddysec-tabs-' + uniqueid);
+
+            if (!container.length) {
+                return;
+            }
+
+            var rawurl = location.href.replace(location.hash, '');
+            var newurl = rawurl + '#' + uniqueid;
+
+            window.history.pushState({}, document.title, newurl);
+
+            $('.gddysec-tabs-buttons a').removeClass(activeState);
+            $('.gddysec-tabs-containers > div').addClass(hiddenState);
+
+            button.addClass(activeState);
+            container.addClass(visibleState);
+            container.removeClass(hiddenState);
         });
 
         $('.gddysec-tabs-containers > div').addClass(hiddenState);
 
         if (locationHash !== undefined) {
-            $('.gddysec-tabs-buttons a').each(function (e, button) {
-                if ($(button).attr('href').split('#')[1] === locationHash) {
+            $('.gddysec-tabs-buttons a').each(function(e, button) {
+                var buttonHash = $(button)
+                    .attr('href')
+                    .split('#')[1];
+
+                if (buttonHash === locationHash) {
                     $(button).trigger('click');
                 }
             });
@@ -79,7 +93,7 @@ jQuery(document).ready(function ($) {
         }
     }
 
-    $('.gddysec-container').on('mouseover', '.gddysec-tooltip', function (event) {
+    $('.gddysec-container').on('mouseover', '.gddysec-tooltip', function() {
         var element = $(this);
         var content = element.attr('content');
 
@@ -88,7 +102,7 @@ jQuery(document).ready(function ($) {
         }
 
         /* create instance of tooltip container */
-        var tooltip = $('<div>', { 'class': 'gddysec-tooltip-object' });
+        var tooltip = $('<div>', { class: 'gddysec-tooltip-object' });
 
         if (element.attr('tooltip-width')) {
             var customWidth = element.attr('tooltip-width');
@@ -107,7 +121,6 @@ jQuery(document).ready(function ($) {
         var tooltipHeight = tooltip.outerHeight();
         tooltip.css('top', (tooltipHeight + arrowHeight) * -1);
 
-        var positionLeft = 0;
         var elementWidth = element.outerWidth();
         var tooltipWidth = tooltip.outerWidth();
 
@@ -116,11 +129,31 @@ jQuery(document).ready(function ($) {
         } else if (elementWidth > tooltipWidth) {
             tooltip.css('left', (elementWidth - tooltipWidth) / 2);
         } else if (elementWidth < tooltipWidth) {
-            tooltip.css('left', ((tooltipWidth - elementWidth) / 2) * -1);
+            tooltip.css('left', (tooltipWidth - elementWidth) / 2 * -1);
         }
     });
 
-    $('.gddysec-container').on('mouseout', '.gddysec-tooltip', function (event) {
-        $(this).find('.gddysec-tooltip-object').remove();
+    $('.gddysec-container').on('mouseout', '.gddysec-tooltip', function() {
+        $(this)
+            .find('.gddysec-tooltip-object')
+            .remove();
+    });
+
+    $('.gddysec-container').on('click', 'button.gddysec-show-section', function(event) {
+        event.preventDefault();
+
+        var button = $(this);
+        var current = button.text();
+        var onText = button.attr('on');
+        var offText = button.attr('off');
+        var section = button.attr('section');
+
+        if (current === onText) {
+            $('#' + section).removeClass('gddysec-hidden');
+            button.html(offText);
+        } else {
+            $('#' + section).addClass('gddysec-hidden');
+            button.html(onText);
+        }
     });
 });

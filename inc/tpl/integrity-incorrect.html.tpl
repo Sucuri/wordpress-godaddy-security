@@ -12,7 +12,7 @@
 
             <p>We have not identified additional files, deleted files, or relevant changes to the core files in your WordPress installation. If you are experiencing other malware issues, we suggest our <a href="https://www.godaddy.com/web-security/malware-removal" target="_blank" rel="noopener">malware removal service</a>.</p>
 
-            <p><a href="%%GDDYSEC.URL.Settings%%#scanner">Review False/Positives</a></p>
+            <p><a href="%%GDDYSEC.URL.Settings%%#general">Review False Positives</a></p>
         </div>
     </div>
 
@@ -86,7 +86,7 @@
                     <td colspan="5">
                         <span>Legends: </span>
 
-                        <span class="gddysec-tooltip" content="Files that are not part of a normal WordPress installation.">
+                        <span class="gddysec-tooltip" content="Files that are not part of a normal WordPress installation. You should consider to delete them, creating a backup beforehand.">
                             <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="15.5px" height="18.5px" class="gddysec-integrity-added">
                                 <path fill-rule="evenodd" stroke="rgb(0, 0, 0)" stroke-width="1px" stroke-linecap="butt" stroke-linejoin="miter" d="M9.845,4.505 L14.481,7.098 L13.639,11.471 L8.498,11.503 L9.845,4.505 Z" />
                                 <path fill-rule="evenodd" stroke="rgb(0, 0, 0)" stroke-width="1px" stroke-linecap="butt" stroke-linejoin="miter" d="M3.500,1.500 L10.500,3.750 L10.500,9.375 L3.500,10.500 L3.500,1.500 Z" />
@@ -94,7 +94,7 @@
                             </svg>
                         </span>
 
-                        <span class="gddysec-tooltip" content="Files that are part of a normal WordPress installation but were modified in your website.">
+                        <span class="gddysec-tooltip" content="Files that are part of a normal WordPress installation but were modified in your website. Modifications are detected comparing the checksum of the files.">
                             <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="15.5px" height="18.5px" class="gddysec-integrity-modified">
                                 <path fill-rule="evenodd" stroke="rgb(0, 0, 0)" stroke-width="1px" stroke-linecap="butt" stroke-linejoin="miter" d="M9.845,4.505 L14.481,7.098 L13.639,11.471 L8.498,11.503 L9.845,4.505 Z" />
                                 <path fill-rule="evenodd" stroke="rgb(0, 0, 0)" stroke-width="1px" stroke-linecap="butt" stroke-linejoin="miter" d="M3.500,1.500 L10.500,3.750 L10.500,9.375 L3.500,10.500 L3.500,1.500 Z" />
@@ -102,7 +102,7 @@
                             </svg>
                         </span>
 
-                        <span class="gddysec-tooltip" content="Files that are part of a normal WordPress installation but were deleted from your website.">
+                        <span class="gddysec-tooltip" content="Files that are part of a normal WordPress installation but were deleted from your website. You should consider an immediate restoration.">
                             <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="15.5px" height="18.5px" class="gddysec-integrity-removed">
                                 <path fill-rule="evenodd" stroke="rgb(0, 0, 0)" stroke-width="1px" stroke-linecap="butt" stroke-linejoin="miter" d="M9.845,4.505 L14.481,7.098 L13.639,11.471 L8.498,11.503 L9.845,4.505 Z" />
                                 <path fill-rule="evenodd" stroke="rgb(0, 0, 0)" stroke-width="1px" stroke-linecap="butt" stroke-linejoin="miter" d="M3.500,1.500 L10.500,3.750 L10.500,9.375 L3.500,10.500 L3.500,1.500 Z" />

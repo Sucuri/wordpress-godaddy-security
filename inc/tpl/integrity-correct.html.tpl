@@ -12,7 +12,7 @@
 
             <p>We have not identified additional files, deleted files, or relevant changes to the core files in your WordPress installation. If you are experiencing other malware issues, we suggest our <a href="https://www.godaddy.com/web-security/malware-removal" target="_blank" rel="noopener">malware removal service</a>.</p>
 
-            <p><a href="%%GDDYSEC.URL.Settings%%#scanner">Review False/Positives</a></p>
+            <p><a href="%%GDDYSEC.URL.Settings%%#general">Review False Positives</a></p>
         </div>
     </div>
 

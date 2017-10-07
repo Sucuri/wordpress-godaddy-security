@@ -535,25 +535,6 @@ class GddysecOption extends GddysecRequest
     }
 
     /**
-     * Add a new post type to the list of ignored events to send alerts.
-     *
-     * @param  string $event_name Unique post-type name.
-     * @return bool               Whether the event was ignored or not.
-     */
-    public static function addIgnoredEvent($event_name = '')
-    {
-        $ignored = self::getIgnoredEvents();
-
-        if (array_key_exists($event_name, $ignored)) {
-            return false; /* skip if the post-type was already ignored */
-        }
-
-        $ignored[$event_name] = time(); /* add post-type to the list */
-
-        return self::updateOption(':ignored_events', @json_encode($ignored));
-    }
-
-    /**
      * Get a list of the post types ignored to receive email alerts when the
      * "new site content" hook is triggered.
      *
@@ -573,25 +554,6 @@ class GddysecOption extends GddysecRequest
         }
 
         return $post_types_arr;
-    }
-
-    /**
-     * Remove a post type from the list of ignored events to send alerts.
-     *
-     * @param  string $event Unique post-type name.
-     * @return bool          Whether the event was removed from the list or not.
-     */
-    public static function removeIgnoredEvent($event = '')
-    {
-        $ignored = self::getIgnoredEvents();
-
-        if (!array_key_exists($event, $ignored)) {
-            return false;
-        }
-
-        unset($ignored[$event]); /* remove post-type from the list */
-
-        return self::updateOption(':ignored_events', @json_encode($ignored));
     }
 
     /**

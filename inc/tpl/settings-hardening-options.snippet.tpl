@@ -2,7 +2,7 @@
 <div class="gddysec-hardening-option gddysec-hstatus gddysec-hstatus-%%GDDYSEC.Hardening.Status%%">
     <span>%%GDDYSEC.Hardening.Title%%</span>
 
-    <form action="%%GDDYSEC.URL.Settings%%#hardening" method="post">
+    <form action="%%GDDYSEC.URL.Settings%%#advanced" method="post">
         <input type="hidden" name="gddysec_page_nonce" value="%%GDDYSEC.PageNonce%%" />
 
         <span class="gddysec-tooltip gddysec-hardening-help" content="%%GDDYSEC.Hardening.Description%%">

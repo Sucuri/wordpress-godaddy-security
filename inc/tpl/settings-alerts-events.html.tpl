@@ -7,7 +7,7 @@
             <p>You have installed a plugin or theme that is not fully compatible with our plugin, some of the security alerts (like the successful and failed logins) will not be sent to you. To prevent an infinite loop while detecting these changes in the website and sending the email alerts via a custom SMTP plugin, we have decided to stop any attempt to send the emails to prevent fatal errors.</p>
         </div>
 
-        <form action="%%GDDYSEC.URL.Settings%%#alerts" method="post">
+        <form action="%%GDDYSEC.URL.Settings%%#general" method="post">
             <input type="hidden" name="gddysec_page_nonce" value="%%GDDYSEC.PageNonce%%" />
 
             <table class="wp-list-table widefat gddysec-table gddysec-settings-alerts">

@@ -20,7 +20,7 @@
         <div class="gddysec-%%GDDYSEC.APIKey.RecoverVisibility%%">
             <div class="gddysec-hstatus gddysec-hstatus-0">
                 <div class="gddysec-monospace">API Key: %%GDDYSEC.APIKey%%</div>
-                <form action="%%GDDYSEC.URL.Settings%%" method="post">
+                <form action="%%GDDYSEC.URL.Settings%%#general" method="post">
                     <input type="hidden" name="gddysec_page_nonce" value="%%GDDYSEC.PageNonce%%" />
                     <button type="submit" name="gddysec_recover_key" class="button button-primary">Recover Via E-mail</button>
                 </form>
@@ -31,7 +31,7 @@
 
         <div class="gddysec-hstatus gddysec-hstatus-1 gddysec-%%GDDYSEC.APIKey.RemoveVisibility%%">
             <div class="gddysec-monospace">API Key: %%GDDYSEC.APIKey%%</div>
-            <form action="%%GDDYSEC.URL.Settings%%" method="post">
+            <form action="%%GDDYSEC.URL.Settings%%#general" method="post">
                 <input type="hidden" name="gddysec_page_nonce" value="%%GDDYSEC.PageNonce%%" />
                 <button type="submit" name="gddysec_remove_api_key" class="button button-primary">Delete</button>
             </form>

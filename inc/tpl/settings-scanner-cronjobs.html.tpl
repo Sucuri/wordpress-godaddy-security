@@ -11,7 +11,7 @@
 
         <p>Scheduled tasks are rules registered in your database by a plugin, theme, or the base system itself; they are used to automatically execute actions defined in the code every certain amount of time. A good use of these rules is to generate backup files of your site, execute a security scanner, or remove unused elements like drafts. <b>Note:</b> Scheduled tasks can be re-installed by any plugin/theme automatically, consider to deactivate the plugin entirely if you want to get rid of the scheduled tasks.</p>
 
-        <form action="%%GDDYSEC.URL.Settings%%#scanner" method="post">
+        <form action="%%GDDYSEC.URL.Settings%%#advanced" method="post">
             <input type="hidden" name="gddysec_page_nonce" value="%%GDDYSEC.PageNonce%%" />
 
             <table class="wp-list-table widefat gddysec-table gddysec-wpcron-list">

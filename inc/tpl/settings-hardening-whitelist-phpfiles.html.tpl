@@ -5,7 +5,7 @@
     <div class="inside">
         <p>After you apply the hardening in either the includes, content, and/or upload directories the plugin will add a rule in the access control file to deny access to any PHP file located in these folders, this is a good precaution in case that an attacker is able to upload a shell script; with a few exceptions the <em>"index.php"</em> is the only one that should be publicly accessible, however many theme/plugin developers decide to use these folders to process some operations, in this case applying the hardening <strong>may break</strong> their functionality.</p>
 
-        <form action="%%GDDYSEC.URL.Settings%%#hardening" method="post">
+        <form action="%%GDDYSEC.URL.Settings%%#advanced" method="post">
             <input type="hidden" name="gddysec_page_nonce" value="%%GDDYSEC.PageNonce%%" />
             <fieldset class="gddysec-clearfix">
                 <label>File Path:</label>
@@ -21,7 +21,7 @@
 
         <hr>
 
-        <form action="%%GDDYSEC.URL.Settings%%#hardening" method="post">
+        <form action="%%GDDYSEC.URL.Settings%%#advanced" method="post">
             <input type="hidden" name="gddysec_page_nonce" value="%%GDDYSEC.PageNonce%%" />
 
             <table class="wp-list-table widefat gddysec-table gddysec-hardening-whitelist-table">

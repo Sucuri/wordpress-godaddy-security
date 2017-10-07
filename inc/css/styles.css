@@ -62,6 +62,7 @@ body.godaddy-security_page_gddysec_hardening {
     text-transform: uppercase;
     line-height: 30px;
     font-weight: 700;
+    cursor: initial;
 }
 .gddysec-container fieldset span {
     line-height: 30px;

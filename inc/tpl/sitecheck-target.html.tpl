@@ -9,7 +9,7 @@
             <span>Malware Scan Target &mdash; <a href="https://sitecheck.sucuri.net/results/%%GDDYSEC.SiteCheck.Target%%" target="_blank" rel="noopener">https://sitecheck.sucuri.net/results/%%GDDYSEC.SiteCheck.Target%%</a></span>
         </div>
 
-        <form action="%%GDDYSEC.URL.Settings%%#apiservice" method="post">
+        <form action="%%GDDYSEC.URL.Settings%%#advanced" method="post">
             <input type="hidden" name="gddysec_page_nonce" value="%%GDDYSEC.PageNonce%%" />
             <fieldset class="gddysec-clearfix">
                 <label>Malware Scan Target:</label>

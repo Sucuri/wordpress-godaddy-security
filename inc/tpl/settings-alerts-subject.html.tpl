@@ -5,7 +5,7 @@
     <div class="inside">
         <p>Format of the subject for the email alerts, by default the plugin will use the website name and the event identifier that is being reported, you can use this panel to include the IP address of the user that triggered the event and some additional data. You can create filters in your email client creating a custom email subject using the pseudo-tags shown below.</p>
 
-        <form action="%%GDDYSEC.URL.Settings%%#alerts" method="post">
+        <form action="%%GDDYSEC.URL.Settings%%#advanced" method="post">
             <input type="hidden" name="gddysec_page_nonce" value="%%GDDYSEC.PageNonce%%" />
 
             <ul class="gddysec-subject-formats">

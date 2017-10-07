@@ -8,7 +8,7 @@
         <div class="gddysec-hstatus gddysec-hstatus-%%GDDYSEC.DiffUtility.StatusNum%%">
             <span>WordPress Integrity Diff Utility &mdash; %%GDDYSEC.DiffUtility.Status%%</span>
 
-            <form action="%%GDDYSEC.URL.Settings%%#scanner" method="post">
+            <form action="%%GDDYSEC.URL.Settings%%#advanced" method="post">
                 <input type="hidden" name="gddysec_page_nonce" value="%%GDDYSEC.PageNonce%%" />
                 <input type="hidden" name="gddysec_diff_utility" value="%%GDDYSEC.DiffUtility.SwitchValue%%" />
                 <button type="submit" class="button button-primary">%%GDDYSEC.DiffUtility.SwitchText%%</button>

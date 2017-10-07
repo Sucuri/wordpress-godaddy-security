@@ -1,11 +1,11 @@
 
 <div class="gddysec-panel">
-    <h3 class="gddysec-title">WordPress Integrity (False/Positives)</h3>
+    <h3 class="gddysec-title">WordPress Integrity (False Positives)</h3>
 
     <div class="inside">
-        <p>Since the scanner doesn't reads the files during the execution of the integrity check, it is possible to find false/positives. Files listed here have been marked as false/positives and will be ignored by the scanner in subsequent scans.</p>
+        <p>Since the scanner doesn't reads the files during the execution of the integrity check, it is possible to find false positives. Files listed here have been marked as false positives and will be ignored by the scanner in subsequent scans.</p>
 
-        <form action="%%GDDYSEC.URL.Settings%%#scanner" method="post">
+        <form action="%%GDDYSEC.URL.Settings%%#general" method="post">
             <input type="hidden" name="gddysec_page_nonce" value="%%GDDYSEC.PageNonce%%" />
             <input type="hidden" name="gddysec_reset_integrity_cache" value="1" />
 

@@ -62,7 +62,7 @@ class GddysecInterface
             'gddysec',
             GDDYSEC_URL . '/inc/css/styles.css',
             array(/* empty */),
-            '3eeb7af'
+            Gddysec::fileVersion('inc/css/styles.css')
         );
         wp_enqueue_style('gddysec');
 
@@ -70,7 +70,7 @@ class GddysecInterface
             'gddysec',
             GDDYSEC_URL . '/inc/js/scripts.js',
             array(/* empty */),
-            '81f6bb4'
+            Gddysec::fileVersion('inc/js/scripts.js')
         );
         wp_enqueue_script('gddysec');
     }

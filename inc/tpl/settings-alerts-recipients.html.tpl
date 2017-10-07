@@ -5,7 +5,7 @@
     <div class="inside">
         <p>By default, the plugin will send the email alerts to the primary admin account, the same account created during the installation of WordPress in your web server. You can add more people to the list, they will receive a copy of the same security alerts.</p>
 
-        <form action="%%GDDYSEC.URL.Settings%%#alerts" method="post">
+        <form action="%%GDDYSEC.URL.Settings%%#general" method="post">
             <input type="hidden" name="gddysec_page_nonce" value="%%GDDYSEC.PageNonce%%" />
 
             <fieldset class="gddysec-clearfix">

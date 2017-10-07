@@ -459,84 +459,76 @@ function gddysec_settings_alerts_events($nonce)
  */
 function gddysec_settings_alerts_ignore_posts()
 {
-    $params = array(
-        'IgnoreRules.PostTypes' => '',
-        'IgnoreRules.ErrorVisibility' => 'hidden',
-    );
+    $params = array();
+    $post_types = GddysecOption::getPostTypes();
+    $ignored_events = GddysecOption::getIgnoredEvents();
+
+    $params['PostTypes.List'] = '';
+    $params['PostTypes.ErrorVisibility'] = 'hidden';
 
     if (GddysecInterface::checkNonce()) {
         // Ignore a new event for email alerts.
-        $action = GddysecRequest::post(':ignorerule_action', '(add|remove)');
+        $action = GddysecRequest::post(':ignorerule_action');
+        $ignore_rule = GddysecRequest::post(':ignorerule');
+        $selected = GddysecRequest::post(':posttypes', '_array');
 
-        if ($action) {
-            $ignore_rule = GddysecRequest::post(':ignorerule');
+        if ($action === 'add') {
+            if (!preg_match('/^[a-z_\-]+$/', $ignore_rule)) {
+                GddysecInterface::error('Only lowercase letters, underscores and hyphens are allowed.');
+            } elseif (array_key_exists($ignore_rule, $ignored_events)) {
+                GddysecInterface::error('The post-type is already being ignored (duplicate).');
+            } else {
+                $ignored_events[$ignore_rule] = time();
 
-            if ($action == 'add') {
-                if (!preg_match('/^[a-z_\-]+$/', $ignore_rule)) {
-                    GddysecInterface::error('Only lowercase letters and underscores are allowed.');
-                } elseif (GddysecOption::addIgnoredEvent($ignore_rule)) {
-                    GddysecInterface::info('Post-type has been successfully ignored.');
-                    GddysecEvent::reportWarningEvent('Changes in <code>' . $ignore_rule . '</code> post-type will be ignored');
-                } else {
-                    GddysecInterface::error('The post-type is invalid or it may be already ignored.');
-                }
-            } elseif ($action == 'remove') {
-                GddysecOption::removeIgnoredEvent($ignore_rule);
-                GddysecInterface::info('The selected post-type will not be ignored anymore.');
-                GddysecEvent::reportNoticeEvent('Changes in <code>' . $ignore_rule . '</code> post-type will not be ignored');
+                GddysecInterface::info('Post-type has been successfully ignored.');
+                GddysecOption::updateOption(':ignored_events', $ignored_events);
+                GddysecEvent::reportWarningEvent('Changes in <code>' . $ignore_rule . '</code> post-type will be ignored');
             }
+        }
+
+        if ($action === 'batch') {
+            /* reset current data to start all over again */
+            $ignored_events = array();
+            $timestamp = time();
+
+            foreach ($post_types as $post_type) {
+                if (is_array($selected) && !in_array($post_type, $selected)) {
+                    $ignored_events[$post_type] = $timestamp;
+                }
+            }
+
+            GddysecInterface::info('List of monitored post-types has been updated.');
+            GddysecOption::updateOption(':ignored_events', $ignored_events);
+            GddysecEvent::reportWarningEvent('List of monitored post-types has been updated');
         }
     }
 
     /* notifications are post updates are disabled; print error */
     if (GddysecOption::isDisabled(':notify_post_publication')) {
-        $params['IgnoreRules.ErrorVisibility'] = 'visible';
-        $params['IgnoreRules.PostTypes'] = sprintf(
-            '<tr><td colspan="4">%s</td></tr>',
-            'no data available'
-        );
+        $params['PostTypes.ErrorVisibility'] = 'visible';
+        $params['PostTypes.List'] = '<tr><td colspan="4">no data available</td></tr>';
 
         return GddysecTemplate::getSection('settings-alerts-ignore-posts', $params);
     }
 
-    $post_types = GddysecOption::getPostTypes();
-    $ignored_events = GddysecOption::getIgnoredEvents();
-
-    /* include custom non-registered post-types */
-    foreach ($ignored_events as $event => $time) {
-        if (!array_key_exists($event, $post_types)) {
-            $post_types[$event] = $event;
-        }
-    }
-
     /* Check which post-types are being ignored */
     foreach ($post_types as $post_type) {
-        $post_type_title = ucwords(str_replace('_', chr(32), $post_type));
+        $was_ignored_at = '--';
+        $selected = 'checked="checked"';
+        $post_type_title = ucwords(str_replace('_', "\x20", $post_type));
 
         if (array_key_exists($post_type, $ignored_events)) {
-            $is_ignored_text = 'Yes';
-            $was_ignored_at = Gddysec::datetime($ignored_events[ $post_type ]);
-            $is_ignored_class = 'danger';
-            $button_action = 'remove';
-            $button_text = 'Receive These Alerts';
-        } else {
-            $is_ignored_text = 'No';
-            $was_ignored_at = '--';
-            $is_ignored_class = 'success';
-            $button_action = 'add';
-            $button_text = 'Stop These Alerts';
+            $was_ignored_at = Gddysec::datetime($ignored_events[$post_type]);
+            $selected = ''; /* uncheck the HTML checkbox */
         }
 
-        $params['IgnoreRules.PostTypes'] .= GddysecTemplate::getSnippet(
+        $params['PostTypes.List'] .= GddysecTemplate::getSnippet(
             'settings-alerts-ignore-posts',
             array(
-                'IgnoreRules.PostTypeTitle' => $post_type_title,
-                'IgnoreRules.IsIgnored' => $is_ignored_text,
-                'IgnoreRules.WasIgnoredAt' => $was_ignored_at,
-                'IgnoreRules.IsIgnoredClass' => $is_ignored_class,
-                'IgnoreRules.PostType' => $post_type,
-                'IgnoreRules.Action' => $button_action,
-                'IgnoreRules.ButtonText' => $button_text,
+                'PostTypes.Selected' => $selected,
+                'PostTypes.UniqueID' => $post_type,
+                'PostTypes.Title' => $post_type_title,
+                'PostTypes.IgnoredAt' => $was_ignored_at,
             )
         );
     }

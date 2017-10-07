@@ -11,7 +11,7 @@
             </span>
         </div>
 
-        <form action="%%GDDYSEC.URL.Settings%%#apiservice" method="post">
+        <form action="%%GDDYSEC.URL.Settings%%#advanced" method="post">
             <input type="hidden" name="gddysec_page_nonce" value="%%GDDYSEC.PageNonce%%" />
             <fieldset class="gddysec-clearfix">
                 <label>WordPress Checksums API:</label>

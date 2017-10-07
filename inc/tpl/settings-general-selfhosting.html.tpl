@@ -11,14 +11,14 @@
 
         <div class="gddysec-hstatus gddysec-hstatus-2 gddysec-monitor-fpath gddysec-%%GDDYSEC.SelfHosting.FpathVisibility%%">
             <span class="gddysec-monospace">%%GDDYSEC.SelfHosting.Fpath%%</span>
-            <form action="%%GDDYSEC.URL.Settings%%#general" method="post">
+            <form action="%%GDDYSEC.URL.Settings%%#advanced" method="post">
                 <input type="hidden" name="gddysec_page_nonce" value="%%GDDYSEC.PageNonce%%" />
                 <input type="hidden" name="gddysec_selfhosting_fpath" />
                 <button type="submit" class="button button-primary">%%GDDYSEC.SelfHosting.SwitchText%%</button>
             </form>
         </div>
 
-        <form action="%%GDDYSEC.URL.Settings%%#general" method="post">
+        <form action="%%GDDYSEC.URL.Settings%%#advanced" method="post">
             <input type="hidden" name="gddysec_page_nonce" value="%%GDDYSEC.PageNonce%%" />
             <fieldset class="gddysec-clearfix">
                 <label>File Path:</label>

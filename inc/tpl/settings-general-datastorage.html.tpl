@@ -10,7 +10,7 @@
         <span class="gddysec-monospace">%%GDDYSEC.Storage.Path%%</span>
     </div>
 
-    <form action="%%GDDYSEC.URL.Settings%%#general" method="post">
+    <form action="%%GDDYSEC.URL.Settings%%#advanced" method="post">
         <input type="hidden" name="gddysec_page_nonce" value="%%GDDYSEC.PageNonce%%" />
         <input type="hidden" name="gddysec_reset_storage" value="1" />
 
