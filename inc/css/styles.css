@@ -46,7 +46,7 @@ body.godaddy-security_page_gddysec_hardening {
     height: 30px;
     line-height: normal;
 }
-.gddysec-container input[type=text] {
+.gddysec-container input[type='text'] {
     margin: 0;
     padding: 0 7px;
     line-height: 28px;
@@ -71,8 +71,8 @@ body.godaddy-security_page_gddysec_hardening {
 .gddysec-container fieldset label,
 .gddysec-container fieldset select,
 .gddysec-container fieldset button,
-.gddysec-container fieldset input[type=text],
-.gddysec-container fieldset input[type=checkbox],
+.gddysec-container fieldset input[type='text'],
+.gddysec-container fieldset input[type='checkbox'],
 .wp-core-ui .gddysec-container fieldset .button,
 .wp-core-ui .gddysec-container fieldset .button-primary,
 .wp-core-ui .gddysec-container fieldset .button-secondary {
@@ -83,7 +83,7 @@ body.godaddy-security_page_gddysec_hardening {
 .gddysec-container fieldset label {
     margin-left: 0;
 }
-.gddysec-container fieldset input[type=checkbox] {
+.gddysec-container fieldset input[type='checkbox'] {
     margin-top: 7px;
     margin-bottom: 7px;
 }
@@ -100,20 +100,24 @@ body.godaddy-security_page_gddysec_hardening {
 }
 .gddysec-header .gddysec-logo {
     display: inline-block;
-    height: 33px;
     margin-left: 10px;
     margin-right: 8px;
     text-decoration: none;
 }
+.gddysec-header .gddysec-logo img {
+    height: 60px;
+}
 .gddysec-header .gddysec-subtitle {
     color: #727376;
-    font-size: 30px;
+    font-size: 26px;
     font-weight: 200;
+    margin-top: 32px;
 }
 .gddysec-header .gddysec-version {
     color: #727376;
     font-size: 11px;
-    margin-left: 0;
+    margin-left: 3px;
+    margin-top: 38px;
 }
 .gddysec-header .gddysec-navbar ul {
     margin: 0;
@@ -539,18 +543,15 @@ body.godaddy-security_page_gddysec_hardening {
     fill: #fff !important;
 }
 .gddysec-flag-icon-green path,
-.gddysec-auditlog-success path,
-.gddysec-integrity-added path {
+.gddysec-auditlog-success path {
     fill: #00a63f;
 }
 .gddysec-flag-icon-red path,
-.gddysec-auditlog-error path,
-.gddysec-integrity-removed path {
+.gddysec-auditlog-error path {
     fill: #f23924;
 }
 .gddysec-flag-icon-purple path,
-.gddysec-auditlog-debug path,
-.gddysec-integrity-modified path {
+.gddysec-auditlog-debug path {
     fill: #b406dc;
 }
 .gddysec-flag-icon-orange path,
@@ -568,6 +569,15 @@ body.godaddy-security_page_gddysec_hardening {
 .gddysec-flag-icon-black path,
 .gddysec-auditlog-critical path {
     fill: #000;
+}
+.gddysec-integrity-added path {
+    fill: #f2f226;
+}
+.gddysec-integrity-modified path {
+    fill: #f29e25;
+}
+.gddysec-integrity-removed path {
+    fill: #f23924;
 }
 .gddysec-container .gddysec-table {
     margin-bottom: 20px;
@@ -898,8 +908,8 @@ body.godaddy-security_page_gddysec_hardening {
 .rtl .gddysec-container fieldset label,
 .rtl .gddysec-container fieldset select,
 .rtl .gddysec-container fieldset button,
-.rtl .gddysec-container fieldset input[type=text],
-.rtl .gddysec-container fieldset input[type=checkbox],
+.rtl .gddysec-container fieldset input[type='text'],
+.rtl .gddysec-container fieldset input[type='checkbox'],
 .rtl .wp-core-ui .gddysec-container fieldset .button,
 .rtl .wp-core-ui .gddysec-container fieldset .button-primary,
 .rtl .wp-core-ui .gddysec-container fieldset .button-secondary {
