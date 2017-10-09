@@ -9,8 +9,8 @@
  * @package    GoDaddy
  * @subpackage GoDaddySecurity
  * @author     Daniel Cid <dcid@sucuri.net>
- * @copyright  2017 Sucuri Inc. - GoDaddy LLC.
- * @license    https://www.godaddy.com/ - Proprietary
+ * @copyright  2017 Sucuri Inc. - GoDaddy Inc.
+ * @license    https://www.gnu.org/licenses/gpl-2.0.txt GPL2
  * @link       https://wordpress.org/plugins/godaddy-security
  */
 
@@ -34,8 +34,8 @@ if (!defined('GDDYSEC_INIT') || GDDYSEC_INIT !== true) {
  * @package    GoDaddy
  * @subpackage GoDaddySecurity
  * @author     Daniel Cid <dcid@sucuri.net>
- * @copyright  2017 Sucuri Inc. - GoDaddy LLC.
- * @license    https://www.godaddy.com/ - Proprietary
+ * @copyright  2017 Sucuri Inc. - GoDaddy Inc.
+ * @license    https://www.gnu.org/licenses/gpl-2.0.txt GPL2
  * @link       https://wordpress.org/plugins/godaddy-security
  */
 class GddysecFileInfo extends Gddysec
@@ -235,23 +235,27 @@ class GddysecFileInfo extends Gddysec
                     continue;
                 }
 
-                /* check only files */
-                if ($fifo->isFile()
-                    && $filterby === 'file'
-                    && !$this->ignoreFile($filepath)
-                    && !$this->ignoreFolder($filepath)
-                ) {
-                    $files[] = $filepath;
-                    continue;
-                }
+                try {
+                    /* check only files */
+                    if ($fifo->isFile()
+                        && $filterby === 'file'
+                        && !$this->ignoreFile($filepath)
+                        && !$this->ignoreFolder($filepath)
+                    ) {
+                        $files[] = $filepath;
+                        continue;
+                    }
 
-                /* check only directories */
-                if ($fifo->isDir()
-                    && $filterby === 'directory'
-                    && !$this->ignoreFolder($filepath)
-                ) {
-                    $files[] = $filepath;
-                    continue;
+                    /* check only directories */
+                    if ($fifo->isDir()
+                        && $filterby === 'directory'
+                        && !$this->ignoreFolder($filepath)
+                    ) {
+                        $files[] = $filepath;
+                        continue;
+                    }
+                } catch (RuntimeException $e) {
+                    SucuriScanEvent::reportCriticalEvent($e->getMessage());
                 }
             }
 
@@ -293,7 +297,13 @@ class GddysecFileInfo extends Gddysec
             $filesize = @filesize($filepath);
 
             if ($as_array) {
-                $basename = str_replace($abspath . '/', '', $filepath);
+                $basename = $filepath;
+
+                if (strlen($abspath . '/') > 1) {
+                    /* convert absolute path into relative path */
+                    $basename = str_replace($abspath . '/', '', $filepath);
+                }
+
                 $signatures[$basename] = array(
                     'filepath' => $filepath,
                     'checksum' => $file_checksum,

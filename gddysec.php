@@ -14,8 +14,8 @@
  * @package    GoDaddy
  * @subpackage GoDaddySecurity
  * @author     Daniel Cid <dcid@sucuri.net>
- * @copyright  2017 Sucuri Inc. - GoDaddy LLC.
- * @license    https://www.godaddy.com/ - Proprietary
+ * @copyright  2017 Sucuri Inc. - GoDaddy Inc.
+ * @license    https://www.gnu.org/licenses/gpl-2.0.txt GPL2
  * @link       https://wordpress.org/plugins/godaddy-security
  */
 
@@ -84,6 +84,11 @@ define('GDDYSEC', 'gddysec');
  * Current version of the plugin's code.
  */
 define('GDDYSEC_VERSION', '0.1.0');
+
+/**
+ * Defines the human readable name of the plugin.
+ */
+define('GDDYSEC_PLUGIN_NAME', 'GoDaddy Security');
 
 /**
  * The name of the folder where the plugin's files will be located.
@@ -184,8 +189,8 @@ require_once 'src/hook.lib.php';
 require_once 'src/api.lib.php';
 require_once 'src/mail.lib.php';
 require_once 'src/template.lib.php';
-require_once 'src/hardening.lib.php';
 require_once 'src/fsscanner.lib.php';
+require_once 'src/hardening.lib.php';
 require_once 'src/interface.lib.php';
 require_once 'src/auditlogs.lib.php';
 require_once 'src/sitecheck.lib.php';

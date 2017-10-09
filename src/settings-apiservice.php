@@ -9,8 +9,8 @@
  * @package    GoDaddy
  * @subpackage GoDaddySecurity
  * @author     Daniel Cid <dcid@sucuri.net>
- * @copyright  2017 Sucuri Inc. - GoDaddy LLC.
- * @license    https://www.godaddy.com/ - Proprietary
+ * @copyright  2017 Sucuri Inc. - GoDaddy Inc.
+ * @license    https://www.gnu.org/licenses/gpl-2.0.txt GPL2
  * @link       https://wordpress.org/plugins/godaddy-security
  */
 
@@ -39,6 +39,7 @@ function gddysec_settings_apiservice_status($nonce)
     $params['ApiStatus.WarningVisibility'] = 'visible';
     $params['ApiStatus.ErrorVisibility'] = 'hidden';
     $params['ApiStatus.ServiceURL'] = GDDYSEC_API_URL;
+    $params['ApiStatus.ApiKey'] = '';
 
     if ($nonce) {
         // Enable or disable the API service communication.
@@ -65,6 +66,9 @@ function gddysec_settings_apiservice_status($nonce)
         $params['ApiStatus.WarningVisibility'] = 'hidden';
         $params['ApiStatus.ErrorVisibility'] = 'visible';
     }
+
+    $api_key = GddysecAPI::getPluginKey();
+    $params['ApiStatus.ApiKey'] = $api_key ? $api_key : 'NONE';
 
     return GddysecTemplate::getSection('settings-apiservice-status', $params);
 }

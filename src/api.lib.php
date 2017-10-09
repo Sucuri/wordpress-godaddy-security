@@ -9,8 +9,8 @@
  * @package    GoDaddy
  * @subpackage GoDaddySecurity
  * @author     Daniel Cid <dcid@sucuri.net>
- * @copyright  2017 Sucuri Inc. - GoDaddy LLC.
- * @license    https://www.godaddy.com/ - Proprietary
+ * @copyright  2017 Sucuri Inc. - GoDaddy Inc.
+ * @license    https://www.gnu.org/licenses/gpl-2.0.txt GPL2
  * @link       https://wordpress.org/plugins/godaddy-security
  */
 
@@ -43,8 +43,8 @@ if (!defined('GDDYSEC_INIT') || GDDYSEC_INIT !== true) {
  * @package    GoDaddy
  * @subpackage GoDaddySecurity
  * @author     Daniel Cid <dcid@sucuri.net>
- * @copyright  2017 Sucuri Inc. - GoDaddy LLC.
- * @license    https://www.godaddy.com/ - Proprietary
+ * @copyright  2017 Sucuri Inc. - GoDaddy Inc.
+ * @license    https://www.gnu.org/licenses/gpl-2.0.txt GPL2
  * @link       https://wordpress.org/plugins/godaddy-security
  */
 class GddysecAPI extends GddysecOption
@@ -284,12 +284,9 @@ class GddysecAPI extends GddysecOption
         if (stripos($raw, 'log file not found') !== false) {
             $key = GddysecOption::getOption(':api_key');
             $msg .= '; this generally happens when you use an invalid API key,'
-            . ' the key will be deleted to hide these warnings, if you want to'
-            . ' recover it go to the settings page and follow the instructions'
-            . ' in the "API Key" section: <code>' . Gddysec::escape($key)
-            . '</code>';
+            . ' or when the connection with the API service suddently closes.';
 
-            GddysecOption::deleteOption(':api_key');
+            GddysecEvent::reportCriticalEvent($msg);
         }
 
         // Special response for invalid firewall API keys.

@@ -9,8 +9,8 @@
  * @package    GoDaddy
  * @subpackage GoDaddySecurity
  * @author     Daniel Cid <dcid@sucuri.net>
- * @copyright  2017 Sucuri Inc. - GoDaddy LLC.
- * @license    https://www.godaddy.com/ - Proprietary
+ * @copyright  2017 Sucuri Inc. - GoDaddy Inc.
+ * @license    https://www.gnu.org/licenses/gpl-2.0.txt GPL2
  * @link       https://wordpress.org/plugins/godaddy-security
  */
 
@@ -34,8 +34,8 @@ if (!defined('GDDYSEC_INIT') || GDDYSEC_INIT !== true) {
  * @package    GoDaddy
  * @subpackage GoDaddySecurity
  * @author     Daniel Cid <dcid@sucuri.net>
- * @copyright  2017 Sucuri Inc. - GoDaddy LLC.
- * @license    https://www.godaddy.com/ - Proprietary
+ * @copyright  2017 Sucuri Inc. - GoDaddy Inc.
+ * @license    https://www.gnu.org/licenses/gpl-2.0.txt GPL2
  * @link       https://wordpress.org/plugins/godaddy-security
  */
 class GddysecInterface
@@ -73,6 +73,52 @@ class GddysecInterface
             Gddysec::fileVersion('inc/js/scripts.js')
         );
         wp_enqueue_script('gddysec');
+    }
+
+    /**
+     * Remove the old GoDaddy plugins.
+     *
+     * Considering that in the new version (after 1.6.0) all the functionality
+     * of the others will be merged here, this will remove duplicated code,
+     * duplicated bugs and/or duplicated maintenance reports allowing us to
+     * focus in one unique project.
+     *
+     * @return void
+     */
+    public static function handleOldPlugins()
+    {
+        // @codeCoverageIgnoreStart
+        if (!class_exists('GddysecFileInfo')) {
+            return;
+        }
+        // @codeCoverageIgnoreEnd
+
+        $finfo = new GddysecFileInfo();
+        $finfo->ignore_files = false;
+        $finfo->ignore_directories = false;
+        $finfo->skip_directories = false;
+        $finfo->run_recursively = true;
+
+        $plugins = array(
+            'c3VjdXJpLXdwLXBsdWdpbi9zdWN1cmkucGhw',
+            'c3VjdXJpLWNsb3VkcHJveHktd2FmL2Nsb3VkcHJveHkucGhw',
+            'ZGVzc2t5LXNlY3VyaXR5L2Rlc3NreS1zZWN1cml0eS5waHA=',
+        );
+
+        foreach ($plugins as $plugin) {
+            $plugin = base64_decode($plugin);
+            $plugin_directory = dirname(WP_PLUGIN_DIR . '/' . $plugin);
+
+            if (file_exists($plugin_directory)) {
+                if (is_plugin_active($plugin)) {
+                    // @codeCoverageIgnoreStart
+                    deactivate_plugins($plugin);
+                    // @codeCoverageIgnoreEnd
+                }
+
+                $finfo->removeDirectoryTree($plugin_directory);
+            }
+        }
     }
 
     /**
@@ -191,7 +237,7 @@ class GddysecInterface
     {
         if (!function_exists('current_user_can') || !current_user_can('manage_options')) {
             Gddysec::throwException('Access denied; cannot manage options');
-            wp_die('Access denied by GoDaddy Security WordPress plugin');
+            wp_die('Access denied by ' . GDDYSEC_PLUGIN_NAME);
         }
     }
 
@@ -212,7 +258,7 @@ class GddysecInterface
 
             if (!$nonce_value || !wp_verify_nonce($nonce_value, $nonce_name)) {
                 Gddysec::throwException('Nonce is invalid');
-                wp_die('WordPress Nonce verification failed, try again going back and checking the form.');
+                self::error('WordPress CSRF verification failed. The submitted form is missing an important unique code that prevents the execution of automated malicious scanners. Go back and try again. If you did not submit a form, this error message could be an indication of an incompatibility between this plugin and another add-on; one of them is inserting data into the global POST variable when the HTTP request is coming via GET. Disable them one by one (while reloading this page) to find the culprit.');
                 return false;
             }
         }

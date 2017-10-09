@@ -9,8 +9,8 @@
  * @package    GoDaddy
  * @subpackage GoDaddySecurity
  * @author     Daniel Cid <dcid@sucuri.net>
- * @copyright  2017 Sucuri Inc. - GoDaddy LLC.
- * @license    https://www.godaddy.com/ - Proprietary
+ * @copyright  2017 Sucuri Inc. - GoDaddy Inc.
+ * @license    https://www.gnu.org/licenses/gpl-2.0.txt GPL2
  * @link       https://wordpress.org/plugins/godaddy-security
  */
 
@@ -158,7 +158,7 @@ function gddysec_settings_general_datastorage($nonce)
         '', /* <root> */
         'auditlogs',
         'auditqueue',
-        'blockedusers',
+        'blockedusers', /* TODO: deprecated on 1.8.12 */
         'failedlogins',
         'hookdata',
         'ignorescanning',
@@ -396,7 +396,6 @@ function gddysec_settings_general_importexport($nonce)
     $params = array();
     $allowed = array(
         ':addr_header',
-        ':api_key',
         ':api_protocol',
         ':api_service',
         ':cloudproxy_apikey',

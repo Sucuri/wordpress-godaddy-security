@@ -9,8 +9,8 @@
  * @package    GoDaddy
  * @subpackage GoDaddySecurity
  * @author     Daniel Cid <dcid@sucuri.net>
- * @copyright  2017 Sucuri Inc. - GoDaddy LLC.
- * @license    https://www.godaddy.com/ - Proprietary
+ * @copyright  2017 Sucuri Inc. - GoDaddy Inc.
+ * @license    https://www.gnu.org/licenses/gpl-2.0.txt GPL2
  * @link       https://wordpress.org/plugins/godaddy-security
  */
 
@@ -46,8 +46,8 @@ if (!defined('GDDYSEC_INIT') || GDDYSEC_INIT !== true) {
  * @package    GoDaddy
  * @subpackage GoDaddySecurity
  * @author     Daniel Cid <dcid@sucuri.net>
- * @copyright  2017 Sucuri Inc. - GoDaddy LLC.
- * @license    https://www.godaddy.com/ - Proprietary
+ * @copyright  2017 Sucuri Inc. - GoDaddy Inc.
+ * @license    https://www.gnu.org/licenses/gpl-2.0.txt GPL2
  * @link       https://wordpress.org/plugins/godaddy-security
  * @see        https://codex.wordpress.org/Option_Reference
  * @see        https://codex.wordpress.org/Options_API
@@ -67,8 +67,10 @@ class GddysecOption extends GddysecRequest
             'gddysec_api_key' => false,
             'gddysec_api_protocol' => 'https',
             'gddysec_api_service' => 'enabled',
+            'gddysec_auto_clear_cache' => 'disabled',
             'gddysec_checksum_api' => '',
             'gddysec_cloudproxy_apikey' => '',
+            'gddysec_diff_utility' => 'disabled',
             'gddysec_dns_lookups' => 'enabled',
             'gddysec_email_subject' => '',
             'gddysec_emails_per_hour' => 5,
@@ -80,7 +82,6 @@ class GddysecOption extends GddysecRequest
             'gddysec_notify_available_updates' => 'disabled',
             'gddysec_notify_bruteforce_attack' => 'disabled',
             'gddysec_notify_failed_login' => 'enabled',
-            'gddysec_notify_failed_password' => 'disabled',
             'gddysec_notify_plugin_activated' => 'enabled',
             'gddysec_notify_plugin_change' => 'enabled',
             'gddysec_notify_plugin_deactivated' => 'disabled',
@@ -105,6 +106,8 @@ class GddysecOption extends GddysecRequest
             'gddysec_prettify_mails' => 'disabled',
             'gddysec_revproxy' => 'disabled',
             'gddysec_runtime' => 0,
+            'gddysec_selfhosting_fpath' => '',
+            'gddysec_selfhosting_monitor' => 'disabled',
             'gddysec_site_version' => '0.0',
             'gddysec_sitecheck_target' => '',
             'gddysec_timezone' => 'UTC+00.00',
@@ -175,6 +178,12 @@ class GddysecOption extends GddysecRequest
      */
     public static function getAllOptions()
     {
+        $options = wp_cache_get('alloptions', GDDYSEC);
+
+        if ($options && is_array($options)) {
+            return $options;
+        }
+
         $options = array();
         $fpath = self::optionsFilePath();
 
@@ -194,6 +203,8 @@ class GddysecOption extends GddysecRequest
             }
         }
 
+        wp_cache_set('alloptions', $options, GDDYSEC);
+
         return $options;
     }
 
@@ -205,6 +216,8 @@ class GddysecOption extends GddysecRequest
      */
     public static function writeNewOptions($options = array())
     {
+        wp_cache_delete('alloptions', GDDYSEC);
+
         $fpath = self::optionsFilePath();
         $content = "<?php exit(0); ?>\n";
         $content .= @json_encode($options) . "\n";
@@ -543,17 +556,12 @@ class GddysecOption extends GddysecRequest
     public static function getIgnoredEvents()
     {
         $post_types = self::getOption(':ignored_events');
-        $post_types_arr = false;
 
         if (is_string($post_types)) {
-            $post_types_arr = @json_decode($post_types, true);
+            $post_types = @json_decode($post_types, true);
         }
 
-        if (!is_array($post_types_arr)) {
-            $post_types_arr = array();
-        }
-
-        return $post_types_arr;
+        return (array) $post_types;
     }
 
     /**

@@ -9,8 +9,8 @@
  * @package    GoDaddy
  * @subpackage GoDaddySecurity
  * @author     Daniel Cid <dcid@sucuri.net>
- * @copyright  2017 Sucuri Inc. - GoDaddy LLC.
- * @license    https://www.godaddy.com/ - Proprietary
+ * @copyright  2017 Sucuri Inc. - GoDaddy Inc.
+ * @license    https://www.gnu.org/licenses/gpl-2.0.txt GPL2
  * @link       https://wordpress.org/plugins/godaddy-security
  */
 
@@ -33,8 +33,8 @@ if (!defined('GDDYSEC_INIT') || GDDYSEC_INIT !== true) {
  * @package    GoDaddy
  * @subpackage GoDaddySecurity
  * @author     Daniel Cid <dcid@sucuri.net>
- * @copyright  2017 Sucuri Inc. - GoDaddy LLC.
- * @license    https://www.godaddy.com/ - Proprietary
+ * @copyright  2017 Sucuri Inc. - GoDaddy Inc.
+ * @license    https://www.gnu.org/licenses/gpl-2.0.txt GPL2
  * @link       https://wordpress.org/plugins/godaddy-security
  */
 class Gddysec
@@ -259,7 +259,10 @@ class Gddysec
      */
     public static function fixPath($path = '')
     {
-        return rtrim(str_replace(DIRECTORY_SEPARATOR, '/', $path), '/');
+        $new = str_replace(DIRECTORY_SEPARATOR, '/', $path);
+        $new = rtrim($new, '/'); /* purge right side. */
+
+        return empty($new) ? '/' : $new;
     }
 
     /**
@@ -711,15 +714,15 @@ class Gddysec
      */
     public static function isValidCIDR($remote_addr = '')
     {
-        $status = false;
-
-        if (preg_match('/^([0-9\.]{7,15})\/(8|16|24)$/', $remote_addr, $match)) {
-            if (self::isValidIP($match[1])) {
-                $status = true;
-            }
+        if (!is_string($remote_addr)) {
+            return false;
         }
 
-        return $status;
+        if (preg_match('/^([0-9\.]{7,15})\/(8|16|24)$/', $remote_addr, $match)) {
+            return self::isValidIP($match[1]);
+        }
+
+        return false;
     }
 
     /**

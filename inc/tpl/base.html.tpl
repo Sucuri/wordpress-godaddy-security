@@ -9,7 +9,7 @@
     <div class="gddysec-header gddysec-clearfix">
         <div class="gddysec-pull-left">
             <a href="%%GDDYSEC.URL.Dashboard%%" class="gddysec-logo gddysec-pull-left">
-                <img src="%%GDDYSEC.PluginURL%%/inc/images/pluginlogo.png" alt="GoDaddy LLC" />
+                <img src="%%GDDYSEC.PluginURL%%/inc/images/pluginlogo.png" alt="GoDaddy Inc" />
             </a>
             <span class="gddysec-subtitle gddysec-pull-left">Security</span>
             <span class="gddysec-version gddysec-pull-left">v%%GDDYSEC.PluginVersion%%</span>

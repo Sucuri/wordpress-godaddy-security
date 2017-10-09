@@ -9,8 +9,8 @@
  * @package    GoDaddy
  * @subpackage GoDaddySecurity
  * @author     Daniel Cid <dcid@sucuri.net>
- * @copyright  2017 Sucuri Inc. - GoDaddy LLC.
- * @license    https://www.godaddy.com/ - Proprietary
+ * @copyright  2017 Sucuri Inc. - GoDaddy Inc.
+ * @license    https://www.gnu.org/licenses/gpl-2.0.txt GPL2
  * @link       https://wordpress.org/plugins/godaddy-security
  */
 
@@ -82,7 +82,6 @@ function gddysec_lastlogins_page()
         'LastLogins.Admins' => gddysec_lastlogins_admins(),
         'LoggedInUsers' => gddysec_loggedin_users_panel(),
         'FailedLogins' => gddysec_failed_logins_panel(),
-        'BlockedUsers' => GddysecBlockedUsers::page(),
     );
 
     echo GddysecTemplate::getTemplate('lastlogins', $params);
@@ -149,7 +148,6 @@ function gddysec_ajax()
         GddysecSiteCheck::ajaxMalwareScan();
         GddysecIntegrity::ajaxIntegrity();
         GddysecIntegrity::ajaxIntegrityDiffUtility();
-        GddysecSettingsScanner::ignoreFoldersAjax();
     }
 
     wp_send_json(array('ok' => false, 'error' => 'invalid ajax action'), 200);

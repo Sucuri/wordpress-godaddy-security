@@ -9,8 +9,8 @@
  * @package    GoDaddy
  * @subpackage GoDaddySecurity
  * @author     Daniel Cid <dcid@sucuri.net>
- * @copyright  2017 Sucuri Inc. - GoDaddy LLC.
- * @license    https://www.godaddy.com/ - Proprietary
+ * @copyright  2017 Sucuri Inc. - GoDaddy Inc.
+ * @license    https://www.gnu.org/licenses/gpl-2.0.txt GPL2
  * @link       https://wordpress.org/plugins/godaddy-security
  */
 
@@ -29,8 +29,8 @@ if (!defined('GDDYSEC_INIT') || GDDYSEC_INIT !== true) {
  * @package    GoDaddy
  * @subpackage GoDaddySecurity
  * @author     Daniel Cid <dcid@sucuri.net>
- * @copyright  2017 Sucuri Inc. - GoDaddy LLC.
- * @license    https://www.godaddy.com/ - Proprietary
+ * @copyright  2017 Sucuri Inc. - GoDaddy Inc.
+ * @license    https://www.gnu.org/licenses/gpl-2.0.txt GPL2
  * @link       https://wordpress.org/plugins/godaddy-security
  */
 class GddysecAuditLogs
@@ -170,7 +170,6 @@ class GddysecAuditLogs
         $outdata = (array) $auditlogs['output_data'];
         $todaysDate = Gddysec::datetime(null, 'M d, Y');
         $iterator_start = ($pageNumber - 1) * $maxPerPage;
-        $show_password = GddysecOption::isEnabled(':notify_failed_password');
         $total_items = count($outdata);
 
         usort($outdata, array('GddysecAuditLogs', 'sortByDate'));
@@ -186,7 +185,7 @@ class GddysecAuditLogs
 
             $audit_log = (array) $outdata[$i];
 
-            if (!$show_password && strpos($audit_log['message'], ";\x20password:")) {
+            if (strpos($audit_log['message'], ";\x20password:")) {
                 $idx = strpos($audit_log['message'], ";\x20password:");
                 $audit_log['message'] = substr($audit_log['message'], 0, $idx);
             }

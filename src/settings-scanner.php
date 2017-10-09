@@ -9,8 +9,8 @@
  * @package    GoDaddy
  * @subpackage GoDaddySecurity
  * @author     Daniel Cid <dcid@sucuri.net>
- * @copyright  2017 Sucuri Inc. - GoDaddy LLC.
- * @license    https://www.godaddy.com/ - Proprietary
+ * @copyright  2017 Sucuri Inc. - GoDaddy Inc.
+ * @license    https://www.gnu.org/licenses/gpl-2.0.txt GPL2
  * @link       https://wordpress.org/plugins/godaddy-security
  */
 
@@ -29,8 +29,8 @@ if (!defined('GDDYSEC_INIT') || GDDYSEC_INIT !== true) {
  * @package    GoDaddy
  * @subpackage GoDaddySecurity
  * @author     Daniel Cid <dcid@sucuri.net>
- * @copyright  2017 Sucuri Inc. - GoDaddy LLC.
- * @license    https://www.godaddy.com/ - Proprietary
+ * @copyright  2017 Sucuri Inc. - GoDaddy Inc.
+ * @license    https://www.gnu.org/licenses/gpl-2.0.txt GPL2
  * @link       https://wordpress.org/plugins/godaddy-security
  */
 class GddysecSettingsScanner extends GddysecSettings
@@ -166,51 +166,6 @@ class GddysecSettingsScanner extends GddysecSettings
     }
 
     /**
-     * Returns a list of directories in the website.
-     *
-     * @return void
-     */
-    public static function ignoreFoldersAjax()
-    {
-        if (GddysecRequest::post('form_action') !== 'get_ignored_files') {
-            return;
-        }
-
-        $response = ''; /* request response */
-        $ignored_dirs = GddysecFSScanner::getIgnoredDirectoriesLive();
-
-        foreach ($ignored_dirs as $group => $dir_list) {
-            foreach ($dir_list as $dir_data) {
-                $valid_entry = false;
-                $snippet = array(
-                    'IgnoreScan.Directory' => '',
-                    'IgnoreScan.DirectoryPath' => '',
-                    'IgnoreScan.IgnoredAt' => '',
-                    'IgnoreScan.IgnoredAtText' => 'OK',
-                );
-
-                if ($group == 'is_ignored') {
-                    $valid_entry = true;
-                    $snippet['IgnoreScan.Directory'] = urlencode($dir_data['directory_path']);
-                    $snippet['IgnoreScan.DirectoryPath'] = $dir_data['directory_path'];
-                    $snippet['IgnoreScan.IgnoredAt'] = Gddysec::datetime($dir_data['ignored_at']);
-                    $snippet['IgnoreScan.IgnoredAtText'] = 'Ignored';
-                } elseif ($group == 'is_not_ignored') {
-                    $valid_entry = true;
-                    $snippet['IgnoreScan.Directory'] = urlencode($dir_data);
-                    $snippet['IgnoreScan.DirectoryPath'] = $dir_data;
-                }
-
-                if ($valid_entry) {
-                    $response .= GddysecTemplate::getSnippet('settings-scanner-ignore-folders', $snippet);
-                }
-            }
-        }
-
-        wp_send_json($response, true);
-    }
-
-    /**
      * Returns the HTML for the folder scanner skipper.
      *
      * If the website has too many files it would be wise to force the plugin to
@@ -225,62 +180,46 @@ class GddysecSettingsScanner extends GddysecSettings
     {
         $params = array();
 
+        $params['IgnoreScan.List'] = '';
+
         if ($nonce) {
-            // Ignore a new directory path for the file system scans.
-            $ign_file = GddysecRequest::post(':ignorescanning_file');
-            $ign_dirs = GddysecRequest::post(':ignorescanning_dirs', '_array');
+            $ign_ress = GddysecRequest::post(':ignorefolder');
+            $ign_dirs = GddysecRequest::post(':unignorefolders', '_array');
 
-            if (GddysecRequest::post(':ignorescanning_action') === 'ignore') {
-                // Target a single file path to be ignored.
-                if ($ign_file !== false) {
-                    $ign_dirs = array($ign_file);
-                    unset($_POST['gddysec_ignorescanning_file']);
-                }
-
-                // Target a list of directories to be ignored.
-                if (is_array($ign_dirs) && !empty($ign_dirs)) {
-                    $were_ignored = 0;
-
-                    foreach ($ign_dirs as $resource_path) {
-                        if (file_exists($resource_path)
-                            && GddysecFSScanner::ignoreDirectory($resource_path)
-                        ) {
-                            $were_ignored++;
-                        }
-                    }
-
-                    if ($were_ignored > 0) {
-                        GddysecInterface::info('Selected files have been successfully processed.');
-                        GddysecEvent::reportWarningEvent(
-                            sprintf(
-                                'Resources will not be scanned: (multiple entries): %s',
-                                @implode(',', $ign_dirs)
-                            )
-                        );
-                    }
-                }
+            if ($ign_ress !== false && GddysecFSScanner::ignoreDirectory($ign_ress)) {
+                GddysecInterface::info('Selected files have been successfully processed.');
+                GddysecEvent::reportWarningEvent('This directory will not be scanned: ' . $ign_ress);
             }
 
-            if (GddysecRequest::post(':ignorescanning_action') === 'unignore') {
-                if (is_array($ign_dirs) && !empty($ign_dirs)) {
-                    $were_ignored = 0;
-
-                    foreach ($ign_dirs as $directory_path) {
-                        GddysecFSScanner::unignoreDirectory($directory_path);
-                        $were_ignored++;
-                    }
-
-                    if ($were_ignored > 0) {
-                        GddysecInterface::info('Selected files have been successfully processed.');
-                        GddysecEvent::reportNoticeEvent(
-                            sprintf(
-                                'Resources will be scanned: (multiple entries): %s',
-                                @implode(',', $ign_dirs)
-                            )
-                        );
-                    }
+            if ($ign_dirs !== false && is_array($ign_dirs) && !empty($ign_dirs)) {
+                foreach ($ign_dirs as $dir) {
+                    GddysecFSScanner::unignoreDirectory($dir);
                 }
+
+                GddysecInterface::info('Selected files have been successfully processed.');
+                GddysecEvent::reportNoticeEvent(
+                    'Directories will be scanned: (multiple entries): '
+                    . @implode(',', $ign_dirs) /* all directories */
+                );
             }
+        }
+
+        $ignored_dirs = GddysecFSScanner::getIgnoredDirectories();
+
+        foreach ($ignored_dirs['directories'] as $index => $folder) {
+            $ts = $ignored_dirs['ignored_at_list'][$index];
+
+            $params['IgnoreScan.List'] .= GddysecTemplate::getSnippet(
+                'settings-scanner-ignore-folders',
+                array(
+                    'IgnoreScan.Directory' => $folder,
+                    'IgnoreScan.IgnoredAt' => Gddysec::datetime($ts),
+                )
+            );
+        }
+
+        if (empty($ignored_dirs['directories'])) {
+            $params['IgnoreScan.List'] .= '<tr><td colspan="3">no data available</td></tr>';
         }
 
         return GddysecTemplate::getSection('settings-scanner-ignore-folders', $params);

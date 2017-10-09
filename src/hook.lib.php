@@ -9,8 +9,8 @@
  * @package    GoDaddy
  * @subpackage GoDaddySecurity
  * @author     Daniel Cid <dcid@sucuri.net>
- * @copyright  2017 Sucuri Inc. - GoDaddy LLC.
- * @license    https://www.godaddy.com/ - Proprietary
+ * @copyright  2017 Sucuri Inc. - GoDaddy Inc.
+ * @license    https://www.gnu.org/licenses/gpl-2.0.txt GPL2
  * @link       https://wordpress.org/plugins/godaddy-security
  */
 
@@ -41,8 +41,8 @@ if (!defined('GDDYSEC_INIT') || GDDYSEC_INIT !== true) {
  * @package    GoDaddy
  * @subpackage GoDaddySecurity
  * @author     Daniel Cid <dcid@sucuri.net>
- * @copyright  2017 Sucuri Inc. - GoDaddy LLC.
- * @license    https://www.godaddy.com/ - Proprietary
+ * @copyright  2017 Sucuri Inc. - GoDaddy Inc.
+ * @license    https://www.gnu.org/licenses/gpl-2.0.txt GPL2
  * @link       https://wordpress.org/plugins/godaddy-security
  */
 class GddysecHook extends GddysecEvent
@@ -176,13 +176,7 @@ class GddysecHook extends GddysecEvent
         $title = empty($title) ? 'Unknown' : sanitize_user($title, true);
         $message = 'User authentication failed: ' . $title;
 
-        /* send the submitted password along with the alert */
-        if (GddysecOption::isEnabled(':notify_failed_password')) {
-            $message .= '; password: ' . $password;
-            gddysec_log_failed_login($title, $password);
-        } else {
-            gddysec_log_failed_login($title, '[hidden]');
-        }
+        gddysec_log_failed_login($title);
 
         self::reportErrorEvent($message);
 

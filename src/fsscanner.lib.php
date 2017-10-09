@@ -9,8 +9,8 @@
  * @package    GoDaddy
  * @subpackage GoDaddySecurity
  * @author     Daniel Cid <dcid@sucuri.net>
- * @copyright  2017 Sucuri Inc. - GoDaddy LLC.
- * @license    https://www.godaddy.com/ - Proprietary
+ * @copyright  2017 Sucuri Inc. - GoDaddy Inc.
+ * @license    https://www.gnu.org/licenses/gpl-2.0.txt GPL2
  * @link       https://wordpress.org/plugins/godaddy-security
  */
 
@@ -35,8 +35,8 @@ if (!defined('GDDYSEC_INIT') || GDDYSEC_INIT !== true) {
  * @package    GoDaddy
  * @subpackage GoDaddySecurity
  * @author     Daniel Cid <dcid@sucuri.net>
- * @copyright  2017 Sucuri Inc. - GoDaddy LLC.
- * @license    https://www.godaddy.com/ - Proprietary
+ * @copyright  2017 Sucuri Inc. - GoDaddy Inc.
+ * @license    https://www.gnu.org/licenses/gpl-2.0.txt GPL2
  * @link       https://wordpress.org/plugins/godaddy-security
  */
 class GddysecFSScanner extends Gddysec
@@ -95,25 +95,16 @@ class GddysecFSScanner extends Gddysec
     }
 
     /**
-     * Retrieve a list of directories ignored.
-     *
-     * Retrieve a list of directory paths that will be ignored during the file
-     * system scans, any sub-directory and files inside these folders will be
-     * skipped automatically and will not be used to detect malware or modifications
-     * in the site.
-     *
-     * The structure of the array returned by the method will always be composed
-     * by four (4) indexes which will facilitate the execution of common conditions
-     * in the implementation code.
+     * Returns a list of ignored directories.
      *
      * <ul>
-     * <li>raw: Will contains the raw data retrieved from the built-in cache system.</li>
-     * <li>checksums: Will contains the md5 of all the directory paths.</li>
-     * <li>directories: Will contains a list of directory paths.</li>
-     * <li>ignored_at_list: Will contains a list of timestamps for when the directories were ignored.</li>
+     * <li><b>raw:</b> Contains the raw data from the local cache.</li>
+     * <li><b>checksums:</b> Contains the md5 of all the directories.</li>
+     * <li><b>directories:</b> Contains a list of directories.</li>
+     * <li><b>ignored_at_list:</b> Contains a list of timestamps.</li>
      * </ul>
      *
-     * @return array List of ignored directory paths.
+     * @return array List of ignored directories.
      */
     public static function getIgnoredDirectories()
     {
@@ -126,57 +117,18 @@ class GddysecFSScanner extends Gddysec
 
         $cache = new GddysecCache('ignorescanning');
         $cache_lifetime = 0; // It is not necessary to expire this cache.
-        $ignored_directories = $cache->getAll($cache_lifetime, 'array');
+        $entries = $cache->getAll($cache_lifetime, 'array');
 
-        if ($ignored_directories) {
-            $response['raw'] = $ignored_directories;
+        if ($entries) {
+            $response['raw'] = $entries;
 
-            foreach ($ignored_directories as $checksum => $data) {
-                if (array_key_exists('directory_path', $data)
-                    && array_key_exists('ignored_at', $data)
-                ) {
+            foreach ($entries as $checksum => $data) {
+                if (isset($data['directory_path']) && isset($data['ignored_at'])) {
                     $response['checksums'][] = $checksum;
                     $response['directories'][] = $data['directory_path'];
                     $response['ignored_at_list'][] = $data['ignored_at'];
                 }
             }
-        }
-
-        return $response;
-    }
-
-    /**
-     * Run file system scan and retrieve ignored folders.
-     *
-     * Run a file system scan and retrieve an array with two indexes, the first
-     * containing a list of ignored directory paths and their respective timestamps
-     * of when they were added by an administrator user, and the second containing a
-     * list of directories that are not being ignored.
-     *
-     * @return array List of ignored and not ignored directories.
-     */
-    public static function getIgnoredDirectoriesLive()
-    {
-        $response = array(
-            'is_ignored' => array(),
-            'is_not_ignored' => array(),
-        );
-
-        // Get the ignored directories from the cache.
-        $ignored_directories = self::getIgnoredDirectories();
-
-        if ($ignored_directories) {
-            $response['is_ignored'] = $ignored_directories['raw'];
-        }
-
-        // Scan the project and file all directories.
-        $file_info = new GddysecFileInfo();
-        $file_info->ignore_files = true;
-        $file_info->ignore_directories = true;
-        $directory_list = $file_info->getDirectoriesOnly(ABSPATH);
-
-        if ($directory_list) {
-            $response['is_not_ignored'] = $directory_list;
         }
 
         return $response;
