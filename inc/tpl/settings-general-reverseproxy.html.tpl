@@ -8,7 +8,7 @@
         <div class="gddysec-hstatus gddysec-hstatus-2">
             <span>Reverse Proxy &mdash; %%GDDYSEC.ReverseProxyStatus%%</span>
 
-            <form action="%%GDDYSEC.URL.Settings%%" method="post">
+            <form action="%%GDDYSEC.URL.Settings%%#advanced" method="post">
                 <input type="hidden" name="gddysec_page_nonce" value="%%GDDYSEC.PageNonce%%" />
                 <input type="hidden" name="gddysec_revproxy" value="%%GDDYSEC.ReverseProxySwitchValue%%" />
                 <button type="submit" class="button button-primary">%%GDDYSEC.ReverseProxySwitchText%%</button>

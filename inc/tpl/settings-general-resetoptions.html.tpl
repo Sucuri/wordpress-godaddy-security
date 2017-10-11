@@ -1,6 +1,6 @@
 
 <div class="gddysec-panel">
-    <h3 class="gddysec-title">Reset Security Logs, Hardening and Settings</h3>
+    <h3 class="gddysec-title">Reset Security Logs and Settings</h3>
 
     <div class="inside">
         <p>This action will trigger the deactivation / uninstallation process of the plugin. All local security logs, hardening and settings will be deleted. Notice that the security logs stored in the API service will not be deleted, this is to prevent tampering from a malicious user. You can request a new API key if you want to start from scratch.</p>

@@ -9,17 +9,9 @@
         <div id="gddysec-tabs-general">
             %%%GDDYSEC.Settings.General.ApiKey%%%
 
-            %%%GDDYSEC.Settings.Alerts.Recipients%%%
-
             %%%GDDYSEC.Settings.Alerts.Events%%%
 
             %%%GDDYSEC.Settings.Alerts.IgnorePosts%%%
-
-            %%%GDDYSEC.Settings.Scanner.IntegrityCache%%%
-
-            %%%GDDYSEC.Settings.General.Timezone%%%
-
-            %%%GDDYSEC.Settings.General.ImportExport%%%
 
             %%%GDDYSEC.Settings.General.ResetOptions%%%
         </div>
@@ -33,6 +25,8 @@
 
             %%%GDDYSEC.Settings.Alerts.Subject%%%
 
+            %%%GDDYSEC.Settings.Alerts.Recipients%%%
+
             %%%GDDYSEC.Settings.Alerts.PerHour%%%
 
             %%%GDDYSEC.Settings.Alerts.BruteForce%%%
@@ -44,6 +38,12 @@
             %%%GDDYSEC.Settings.SiteCheck.Target%%%
 
             %%%GDDYSEC.Settings.APIService.Checksums%%%
+
+            %%%GDDYSEC.Settings.Scanner.IntegrityCache%%%
+
+            %%%GDDYSEC.Settings.General.Timezone%%%
+
+            %%%GDDYSEC.Settings.General.ImportExport%%%
 
             %%%GDDYSEC.Settings.Scanner.Cronjobs%%%
 

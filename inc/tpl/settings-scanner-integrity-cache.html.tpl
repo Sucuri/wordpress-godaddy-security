@@ -5,7 +5,7 @@
     <div class="inside">
         <p>Since the scanner doesn't reads the files during the execution of the integrity check, it is possible to find false positives. Files listed here have been marked as false positives and will be ignored by the scanner in subsequent scans.</p>
 
-        <form action="%%GDDYSEC.URL.Settings%%#general" method="post">
+        <form action="%%GDDYSEC.URL.Settings%%#advanced" method="post">
             <input type="hidden" name="gddysec_page_nonce" value="%%GDDYSEC.PageNonce%%" />
             <input type="hidden" name="gddysec_reset_integrity_cache" value="1" />
 

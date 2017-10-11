@@ -4,7 +4,7 @@
 
     <p>There are cases where this operation may fail, an example would be when the email address is not associated with the domain anymore, this happens when the base URL changes <em>(from www to none or viceversa)</em>. If you are having issues recovering the key please send an email explaining the situation to <a href="mailto:info@sucuri.net">info@sucuri.net</a></p>
 
-    <form action="%%GDDYSEC.URL.Settings%%" method="post">
+    <form action="%%GDDYSEC.URL.Settings%%#general" method="post">
         <input type="hidden" name="gddysec_page_nonce" value="%%GDDYSEC.PageNonce%%" />
         <fieldset class="gddysec-clearfix">
             <label>API Key:</label>

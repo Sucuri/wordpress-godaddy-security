@@ -10,6 +10,6 @@
         </div>
 
         <a href="%%GDDYSEC.URL.Dashboard%%" class="button button-primary">Dashboard</a>
-        <a href="%%GDDYSEC.URL.Settings%%" class="button button-primary">Settings</a>
+        <a href="%%GDDYSEC.URL.Settings%%#general" class="button button-primary">Settings</a>
     </div>
 </div>
