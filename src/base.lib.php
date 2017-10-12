@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Code related to the gddysec.lib.php interface.
+ * Code related to the base.lib.php interface.
  *
  * PHP version 5
  *
