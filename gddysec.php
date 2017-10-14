@@ -202,7 +202,6 @@ require_once 'src/pagehandler.php';
 /* Load handlers for main pages (lastlogins). */
 require_once 'src/lastlogins.php';
 require_once 'src/lastlogins-failed.php';
-require_once 'src/lastlogins-blocked.php';
 
 /* Load handlers for main pages (settings). */
 require_once 'src/settings.php';
